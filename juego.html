@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agar.io VES Online</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #0b0f19; font-family: sans-serif; color: #fff; }
+    #gameCanvas { display: block; background: #0f172a; cursor: crosshair; }
+    
+    .top-bar {
+      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.9); border: 2px solid #0284c7; padding: 10px 25px;
+      border-radius: 30px; display: flex; align-items: center; gap: 12px; z-index: 5;
+    }
+    .ves-amount { font-size: 1.4rem; font-weight: 800; color: #38bdf8; }
+
+    .leaderboard {
+      position: absolute; top: 15px; right: 15px; background: rgba(15, 23, 42, 0.85);
+      border: 1px solid #334155; padding: 15px; border-radius: 12px; width: 220px; z-index: 5;
+    }
+    .leaderboard h3 { font-size: 1rem; color: #38bdf8; text-align: center; margin-bottom: 8px; }
+    .leaderboard ol { font-size: 0.85rem; padding-left: 20px; }
+
+    .modal-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); display: flex; justify-content: center; align-items: center; z-index: 10;
+    }
+    .card { background: #1e293b; border: 1px solid #334155; padding: 30px; border-radius: 16px; width: 360px; text-align: center; }
+    input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin: 15px 0; text-align: center; }
+    .btn-main { width: 100%; padding: 14px; background: #10b981; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="top-bar">
+    <label>Tus VES:</label>
+    <div class="ves-amount" id="topVesDisplay">300.00 VES</div>
+  </div>
+
+  <div class="leaderboard">
+    <h3>Top Jugadores</h3>
+    <ol id="leaderboardList"></ol>
+  </div>
+
+  <div class="modal-overlay" id="menuModal">
+    <div class="card">
+      <h1>Agar.io Online VES</h1>
+      <p>Mapa Gigante (8000x8000). Sin comida: ¡solo ganas VES cazando a otros jugadores!</p>
+      
+      <input type="text" id="playerName" placeholder="Tu Username" value="Jugador1" maxlength="12">
+      <button class="btn-main" onclick="connectAndPlay()">CONECTAR Y JUGAR</button>
+    </div>
+  </div>
+
+<script>
+  let ws;
+  let myId = null;
+  let players = {};
+  let WORLD_SIZE = 8000;
+  let mouse = { x: 0, y: 0 };
+  let camera = { x: 0, y: 0 };
+
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function connectAndPlay() {
+    // Para jugar localmente se usa localhost:3000. Para jugar online en distintas redes se coloca la IP o dominio del servidor.
+    ws = new WebSocket('wss://agario-ves-server.onrender.com');
+
+    ws.onopen = () => {
+      const pName = document.getElementById('playerName').value || 'Jugador1';
+      ws.send(JSON.stringify({ type: 'join', name: pName }));
+      document.getElementById('menuModal').classList.add('hidden');
+      requestAnimationFrame(renderLoop);
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'init') {
+        myId = data.id;
+        WORLD_SIZE = data.worldSize;
+      }
+
+      if (data.type === 'state') {
+        players = data.players;
+        updateUI();
+      }
+
+      if (data.type === 'dead') {
+        alert('Has muerto o tocaste el borde rojo');
+        location.reload();
+      }
+    };
+  }
+
+  window.addEventListener('mousemove', e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    
+    if (ws && ws.readyState === WebSocket.OPEN && myId && players[myId]) {
+      ws.send(JSON.stringify({
+        type: 'move',
+        targetX: mouse.x + camera.x,
+        targetY: mouse.y + camera.y
+      }));
+    }
+  });
+
+  function updateUI() {
+    if (myId && players[myId]) {
+      document.getElementById('topVesDisplay').innerText = `${Math.floor(players[myId].ves)} VES`;
+    }
+
+    // Actualizar Leaderboard
+    const list = Object.values(players).sort((a,b) => b.ves - a.ves).slice(0, 5);
+    const listEl = document.getElementById('leaderboardList');
+    listEl.innerHTML = '';
+    list.forEach(p => {
+      let li = document.createElement('li');
+      li.innerText = `${p.name}: ${Math.floor(p.ves)} VES`;
+      listEl.appendChild(li);
+    });
+  }
+
+  function renderLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (myId && players[myId]) {
+      camera.x = players[myId].x - canvas.width / 2;
+      camera.y = players[myId].y - canvas.height / 2;
+    }
+
+    // Fondo y Rejilla
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1;
+    const gridSize = 100;
+    for (let x = -camera.x % gridSize; x < canvas.width; x += gridSize) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = -camera.y % gridSize; y < canvas.height; y += gridSize) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+
+    // Bordes Rojos Gigantes
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 16;
+    ctx.strokeRect(0 - camera.x, 0 - camera.y, WORLD_SIZE, WORLD_SIZE);
+
+    // Dibujar todos los jugadores en tiempo real desde el servidor
+    Object.values(players).forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x - camera.x, p.y - camera.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.name, p.x - camera.x, p.y - camera.y - 4);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText(`${Math.floor(p.ves)} VES`, p.x - camera.x, p.y - camera.y + 10);
+    });
+
+    requestAnimationFrame(renderLoop);
+  }
+</script>
+</body>
+</html>
