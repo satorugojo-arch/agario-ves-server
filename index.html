@@ -1,180 +1,520 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agar.io VES Online</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #0b0f19; font-family: sans-serif; color: #fff; }
-    #gameCanvas { display: block; background: #0f172a; cursor: crosshair; }
-    
-    .top-bar {
-      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.9); border: 2px solid #0284c7; padding: 10px 25px;
-      border-radius: 30px; display: flex; align-items: center; gap: 12px; z-index: 5;
-    }
-    .ves-amount { font-size: 1.4rem; font-weight: 800; color: #38bdf8; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRAGABOLÍVARES VES</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0; padding: 0;
+            user-select: none; -webkit-user-select: none;
+            touch-action: none;
+        }
+        body, html {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background-color: #0b0e14;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #gameCanvas {
+            display: block; width: 100vw; height: 100vh;
+            background-color: #0d111a;
+        }
+        /* HUD Barra Superior */
+        #topProgressContainer {
+            position: absolute;
+            top: 15px; left: 50%;
+            transform: translateX(-50%);
+            width: 80%; max-width: 480px;
+            background: rgba(15, 21, 34, 0.9);
+            border: 2px solid #1a2233;
+            border-radius: 12px;
+            padding: 8px 15px;
+            z-index: 5; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .progress-title {
+            color: #fff; font-size: 12px; font-weight: bold;
+            margin-bottom: 5px; text-transform: uppercase;
+            display: flex; justify-content: space-between;
+        }
+        .progress-bar-bg {
+            width: 100%; height: 14px;
+            background: #1a2233; border-radius: 7px;
+            overflow: hidden; border: 1px solid #2a354d;
+        }
+        #progressBarFill {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, #ff0055, #ffcc00, #00e699);
+            transition: width 0.3s ease;
+        }
+        #hudStatusText {
+            font-size: 11px; color: #ff3366; font-weight: bold; margin-top: 4px;
+        }
 
-    .leaderboard {
-      position: absolute; top: 15px; right: 15px; background: rgba(15, 23, 42, 0.85);
-      border: 1px solid #334155; padding: 15px; border-radius: 12px; width: 220px; z-index: 5;
-    }
-    .leaderboard h3 { font-size: 1rem; color: #38bdf8; text-align: center; margin-bottom: 8px; }
-    .leaderboard ol { font-size: 0.85rem; padding-left: 20px; }
+        /* Leaderboard Esquina Superior Derecha */
+        #leaderboardBox {
+            position: absolute;
+            top: 15px; right: 15px;
+            width: 180px;
+            background: rgba(15, 21, 34, 0.88);
+            border: 1px solid #2a354d;
+            border-radius: 10px;
+            padding: 10px;
+            color: #fff;
+            z-index: 5;
+            font-size: 12px;
+        }
+        #leaderboardBox h4 {
+            color: #00e699;
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            border-bottom: 1px solid #2a354d;
+            padding-bottom: 4px;
+        }
+        .lb-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .lb-name { color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px; }
+        .lb-ves { color: #ffcc00; font-weight: bold; }
 
-    .modal-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(15, 23, 42, 0.85); display: flex; justify-content: center; align-items: center; z-index: 10;
-    }
-    .card { background: #1e293b; border: 1px solid #334155; padding: 30px; border-radius: 16px; width: 360px; text-align: center; }
-    input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin: 15px 0; text-align: center; }
-    .btn-main { width: 100%; padding: 14px; background: #10b981; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
-    .hidden { display: none !important; }
-  </style>
+        /* Lobby */
+        #loginOverlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 14, 23, 0.94);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 10;
+        }
+        #loginBox {
+            background: #1a2233; padding: 25px;
+            border-radius: 16px; text-align: center; color: #fff;
+            box-shadow: 0 0 30px rgba(0, 230, 153, 0.25);
+            max-width: 90%; width: 380px;
+            border: 1px solid #00e69933;
+        }
+        #loginBox h1 { color: #00e699; font-size: 24px; margin-bottom: 8px; }
+        .banner-text {
+            color: #ffcc00; font-size: 12px; font-weight: bold;
+            margin-bottom: 15px; line-height: 1.4;
+            background: rgba(255, 204, 0, 0.1); padding: 10px;
+            border-radius: 8px; border: 1px dashed #ffcc0066;
+        }
+        .balance-card {
+            background: #0f1522; padding: 10px; border-radius: 10px;
+            margin-bottom: 12px; border: 1px solid #2a354d;
+        }
+        .balance-amount { font-size: 24px; font-weight: bold; color: #00e699; }
+        #playerName {
+            width: 100%; padding: 12px; margin-bottom: 12px;
+            border-radius: 8px; border: 1px solid #2a354d;
+            background: #0f1522; color: #fff; font-size: 15px;
+            text-align: center; outline: none;
+        }
+
+        /* Selector de Skin / Color */
+        .skin-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .color-opt {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #2a354d;
+            transition: 0.2s;
+        }
+        .color-opt.selected {
+            border: 3px solid #fff;
+            transform: scale(1.15);
+        }
+
+        .btn {
+            width: 100%; padding: 12px; border-radius: 8px;
+            border: none; font-weight: bold; font-size: 16px;
+            cursor: pointer; margin-bottom: 8px;
+        }
+        #btnPlay { background: #00e699; color: #0b0e14; }
+        #btnPlay:disabled { background: #2a354d; color: #6c7a9c; cursor: not-allowed; }
+        #btnRecharge { background: #3182ce; color: #fff; }
+
+        /* Modal Recarga */
+        #rechargeModal {
+            display: none; position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center; align-items: center; z-index: 20;
+        }
+        .modal-content {
+            background: #1a2233; padding: 20px; border-radius: 14px;
+            width: 340px; max-width: 90%; color: #fff; text-align: left;
+            border: 1px solid #3182ce;
+        }
+        .payment-method {
+            background: #0f1522; padding: 10px; border-radius: 8px;
+            margin-bottom: 10px; border: 1px solid #2a354d; font-size: 13px;
+        }
+
+        /* Controls Mobile */
+        #touchControls {
+            position: absolute; bottom: 30px; left: 30px;
+            width: 120px; height: 120px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%; display: none; z-index: 5;
+        }
+        #joystickKnob {
+            position: absolute; top: 35px; left: 35px;
+            width: 50px; height: 50px; background: rgba(0, 230, 153, 0.6);
+            border-radius: 50%; pointer-events: none;
+        }
+    </style>
 </head>
 <body>
 
-  <canvas id="gameCanvas"></canvas>
-
-  <div class="top-bar">
-    <label>Tus VES:</label>
-    <div class="ves-amount" id="topVesDisplay">300.00 VES</div>
-  </div>
-
-  <div class="leaderboard">
-    <h3>Top Jugadores</h3>
-    <ol id="leaderboardList"></ol>
-  </div>
-
-  <div class="modal-overlay" id="menuModal">
-    <div class="card">
-      <h1>Agar.io Online VES</h1>
-      <p>Mapa Gigante (8000x8000). Sin comida: ¡solo ganas VES cazando a otros jugadores!</p>
-      
-      <input type="text" id="playerName" placeholder="Tu Username" value="Jugador1" maxlength="12">
-      <button class="btn-main" onclick="connectAndPlay()">CONECTAR Y JUGAR</button>
+    <!-- HUD Barra Superior -->
+    <div id="topProgressContainer">
+        <div class="progress-title">
+            <span>Meta de Salida</span>
+            <span id="progressVesText">300 / 9,000 VES</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div id="progressBarFill"></div>
+        </div>
+        <div id="hudStatusText">🔒 BORDES BLOQUEADOS (LLEGA A 9,000 VES PARA ESCAPAR)</div>
     </div>
-  </div>
 
-<script>
-  let ws;
-  let myId = null;
-  let players = {};
-  let WORLD_SIZE = 8000;
-  let mouse = { x: 0, y: 0 };
-  let camera = { x: 0, y: 0 };
+    <!-- Leaderboard -->
+    <div id="leaderboardBox">
+        <h4>🏆 TOP JUGADORES</h4>
+        <div id="lbList"><div style="text-align:center; color:#718096;">Esperando...</div></div>
+    </div>
 
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
+    <!-- Lobby -->
+    <div id="loginOverlay">
+        <div id="loginBox">
+            <h1>TRAGABOLÍVARES</h1>
+            <div class="banner-text">
+                ⚠️ CUIDADO CON LOS VIRUS CON ESPINAS: TE MATARÁN INSTANTÁNEAMENTE.
+            </div>
 
-  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  window.addEventListener('resize', resize);
-  resize();
+            <div class="balance-card">
+                <div style="font-size:11px; color:#a0aec0;">SALDO DISPONIBLE</div>
+                <div class="balance-amount"><span id="vesDisplay">1000</span> VES</div>
+            </div>
 
-  function connectAndPlay() {
-    // Para jugar localmente se usa localhost:3000. Para jugar online en distintas redes se coloca la IP o dominio del servidor.
-    ws = new WebSocket('wss://agario-ves-server.onrender.com');
+            <input type="text" id="playerName" placeholder="Tu Apodo..." maxlength="12">
+            
+            <div style="font-size:12px; color:#a0aec0; margin-bottom:6px;">ELIGE TU COLOR DE ESFERA:</div>
+            <div class="skin-selector">
+                <div class="color-opt selected" style="background: #00e699;" onclick="selectColor('#00e699', this)"></div>
+                <div class="color-opt" style="background: #ff0055;" onclick="selectColor('#ff0055', this)"></div>
+                <div class="color-opt" style="background: #00bfff;" onclick="selectColor('#00bfff', this)"></div>
+                <div class="color-opt" style="background: #ffcc00;" onclick="selectColor('#ffcc00', this)"></div>
+                <div class="color-opt" style="background: #9933ff;" onclick="selectColor('#9933ff', this)"></div>
+            </div>
 
-    ws.onopen = () => {
-      const pName = document.getElementById('playerName').value || 'Jugador1';
-      ws.send(JSON.stringify({ type: 'join', name: pName }));
-      document.getElementById('menuModal').classList.add('hidden');
-      requestAnimationFrame(renderLoop);
-    };
+            <button id="btnPlay" class="btn" onclick="tryPlay()">JUGAR (300 VES)</button>
+            <button id="btnRecharge" class="btn" onclick="openRecharge()">RECARGAR SALDO</button>
+        </div>
+    </div>
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    <!-- Modal Recarga -->
+    <div id="rechargeModal">
+        <div class="modal-content">
+            <h3 style="color:#3182ce; text-align:center; margin-bottom:8px;">RECARGAR SALDO</h3>
+            <div style="background:rgba(229, 62, 62, 0.2); color:#feb2b2; padding:6px; border-radius:6px; font-size:12px; text-align:center; font-weight:bold; margin-bottom:10px;">
+                ⚠️ RECARGA MÍNIMA: 1,000 VES
+            </div>
+            <div class="payment-method">
+                <h4 style="color:#00e699;">PAGO MÓVIL</h4>
+                <p><strong>Banco:</strong> Banesco (0134)</p>
+                <p><strong>C.I.:</strong> 12.345.678</p>
+                <p><strong>Teléfono:</strong> 0412-1234567</p>
+            </div>
+            <div class="payment-method">
+                <h4 style="color:#00e699;">BINANCE PAY</h4>
+                <p><strong>Binance ID:</strong> 123456789</p>
+            </div>
+            <button class="btn" style="background:#e53e3e; color:#fff;" onclick="closeRecharge()">VOLVER</button>
+        </div>
+    </div>
 
-      if (data.type === 'init') {
-        myId = data.id;
-        WORLD_SIZE = data.worldSize;
-      }
+    <canvas id="gameCanvas"></canvas>
+    <div id="touchControls"><div id="joystickKnob"></div></div>
 
-      if (data.type === 'state') {
-        players = data.players;
-        updateUI();
-      }
+    <script>
+        let userVes = 1000;
+        const ENTRY_FEE = 300;
+        const GOAL_VES = 9000;
+        let selectedColor = '#00e699';
 
-      if (data.type === 'dead') {
-        alert('Has muerto o tocaste el borde rojo');
-        location.reload();
-      }
-    };
-  }
+        let ws;
+        let myId = null;
+        let players = {};
+        let foods = [];
+        let viruses = [];
+        let MAP_SIZE = 5000;
 
-  window.addEventListener('mousemove', e => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-    
-    if (ws && ws.readyState === WebSocket.OPEN && myId && players[myId]) {
-      ws.send(JSON.stringify({
-        type: 'move',
-        targetX: mouse.x + camera.x,
-        targetY: mouse.y + camera.y
-      }));
-    }
-  });
+        let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        let camera = { x: 0, y: 0 };
+        const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
-  function updateUI() {
-    if (myId && players[myId]) {
-      document.getElementById('topVesDisplay').innerText = `${Math.floor(players[myId].ves)} VES`;
-    }
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const touchControls = document.getElementById('touchControls');
+        const knob = document.getElementById('joystickKnob');
 
-    // Actualizar Leaderboard
-    const list = Object.values(players).sort((a,b) => b.ves - a.ves).slice(0, 5);
-    const listEl = document.getElementById('leaderboardList');
-    listEl.innerHTML = '';
-    list.forEach(p => {
-      let li = document.createElement('li');
-      li.innerText = `${p.name}: ${Math.floor(p.ves)} VES`;
-      listEl.appendChild(li);
-    });
-  }
+        function selectColor(color, el) {
+            selectedColor = color;
+            document.querySelectorAll('.color-opt').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+        }
 
-  function renderLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function updateBalanceDisplay() {
+            document.getElementById('vesDisplay').innerText = userVes;
+            const btnPlay = document.getElementById('btnPlay');
+            if (userVes < ENTRY_FEE) {
+                btnPlay.disabled = true;
+                btnPlay.innerText = `SALDO INSUFICIENTE (< ${ENTRY_FEE} VES)`;
+            } else {
+                btnPlay.disabled = false;
+                btnPlay.innerText = `JUGAR (${ENTRY_FEE} VES)`;
+            }
+        }
+        updateBalanceDisplay();
 
-    if (myId && players[myId]) {
-      camera.x = players[myId].x - canvas.width / 2;
-      camera.y = players[myId].y - canvas.height / 2;
-    }
+        function openRecharge() { document.getElementById('rechargeModal').style.display = 'flex'; }
+        function closeRecharge() { document.getElementById('rechargeModal').style.display = 'none'; }
 
-    // Fondo y Rejilla
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 1;
-    const gridSize = 100;
-    for (let x = -camera.x % gridSize; x < canvas.width; x += gridSize) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-    }
-    for (let y = -camera.y % gridSize; y < canvas.height; y += gridSize) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-    }
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
 
-    // Bordes Rojos Gigantes
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 16;
-    ctx.strokeRect(0 - camera.x, 0 - camera.y, WORLD_SIZE, WORLD_SIZE);
+        if (isMobile) touchControls.style.display = 'block';
 
-    // Dibujar todos los jugadores en tiempo real desde el servidor
-    Object.values(players).forEach(p => {
-      ctx.beginPath();
-      ctx.arc(p.x - camera.x, p.y - camera.y, p.radius, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.fill();
-      ctx.strokeStyle = '#000';
-      ctx.stroke();
+        window.addEventListener('mousemove', (e) => {
+            if (!isMobile) {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+                sendMovement();
+            }
+        });
 
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(p.name, p.x - camera.x, p.y - camera.y - 4);
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillText(`${Math.floor(p.ves)} VES`, p.x - camera.x, p.y - camera.y + 10);
-    });
+        const joyRadius = 60;
+        touchControls.addEventListener('touchstart', handleTouch, false);
+        touchControls.addEventListener('touchmove', handleTouch, false);
+        touchControls.addEventListener('touchend', () => {
+            knob.style.transform = `translate(0px, 0px)`;
+        }, false);
 
-    requestAnimationFrame(renderLoop);
-  }
-</script>
+        function handleTouch(e) {
+            e.preventDefault();
+            const rect = touchControls.getBoundingClientRect();
+            const touch = e.touches[0];
+            let dx = touch.clientX - (rect.left + rect.width / 2);
+            let dy = touch.clientY - (rect.top + rect.height / 2);
+            const dist = Math.hypot(dx, dy);
+
+            if (dist > joyRadius) {
+                dx = (dx / dist) * joyRadius;
+                dy = (dy / dist) * joyRadius;
+            }
+
+            knob.style.transform = `translate(${dx}px, ${dy}px)`;
+            mouse.x = (window.innerWidth / 2) + (dx / joyRadius) * 200;
+            mouse.y = (window.innerHeight / 2) + (dy / joyRadius) * 200;
+            sendMovement();
+        }
+
+        function sendMovement() {
+            if (ws && ws.readyState === WebSocket.OPEN && myId && players[myId]) {
+                const myCell = players[myId];
+                ws.send(JSON.stringify({
+                    type: 'move',
+                    targetX: myCell.x + (mouse.x - window.innerWidth / 2),
+                    targetY: myCell.y + (mouse.y - window.innerHeight / 2)
+                }));
+            }
+        }
+
+        function tryPlay() {
+            if (userVes < ENTRY_FEE) return;
+
+            userVes -= ENTRY_FEE;
+            updateBalanceDisplay();
+
+            document.getElementById('loginOverlay').style.display = 'none';
+
+            ws = new WebSocket('wss://agario-ves-server.onrender.com');
+
+            ws.onopen = () => {
+                const pName = document.getElementById('playerName').value || 'Jugador';
+                ws.send(JSON.stringify({ type: 'join', name: pName, color: selectedColor }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'init') {
+                    myId = data.id;
+                    if (data.mapSize) MAP_SIZE = data.mapSize;
+                } else if (data.type === 'state') {
+                    players = data.players;
+                    foods = data.foods || [];
+                    viruses = data.viruses || [];
+
+                    // Actualizar Leaderboard
+                    if (data.leaderboard) {
+                        const lbHtml = data.leaderboard.map((item, idx) => `
+                            <div class="lb-item">
+                                <span class="lb-name">${idx + 1}. ${item.name}</span>
+                                <span class="lb-ves">${item.ves} VES</span>
+                            </div>
+                        `).join('');
+                        document.getElementById('lbList').innerHTML = lbHtml || '<div style="text-align:center;">Sin jugadores</div>';
+                    }
+
+                    if (myId && !players[myId]) {
+                        ws.close();
+                        alert('¡Has sido devorado por otro jugador!');
+                        document.getElementById('loginOverlay').style.display = 'flex';
+                        myId = null;
+                    }
+                } else if (data.type === 'killed_by_virus') {
+                    ws.close();
+                    alert('💥 ¡CHOCASTE CON UN VIRUS MORTAL Y EXPLOTASTE!');
+                    document.getElementById('loginOverlay').style.display = 'flex';
+                    myId = null;
+                } else if (data.type === 'escaped') {
+                    userVes += data.vesGained;
+                    updateBalanceDisplay();
+                    ws.close();
+                    alert(`🎉 ¡ESCAPASTE CON ÉXITO! Te has retirado con ${data.vesGained} VES.`);
+                    document.getElementById('loginOverlay').style.display = 'flex';
+                    myId = null;
+                }
+            };
+
+            ws.onclose = () => { myId = null; };
+        }
+
+        // Función para dibujar Virus Espinoso
+        function drawVirus(x, y, radius) {
+            ctx.save();
+            ctx.beginPath();
+            const spikes = 16;
+            const outerRadius = radius;
+            const innerRadius = radius - 6;
+
+            for (let i = 0; i < spikes; i++) {
+                let angle = (Math.PI * 2 / spikes) * i;
+                let rx = x + Math.cos(angle) * outerRadius;
+                let ry = y + Math.sin(angle) * outerRadius;
+                if (i === 0) ctx.moveTo(rx, ry);
+                else ctx.lineTo(rx, ry);
+
+                angle += (Math.PI * 2 / spikes) / 2;
+                rx = x + Math.cos(angle) * innerRadius;
+                ry = y + Math.sin(angle) * innerRadius;
+                ctx.lineTo(rx, ry);
+            }
+
+            ctx.closePath();
+            ctx.fillStyle = '#33cc33';
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#248f24';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let currentVes = 300;
+            let reachedGoal = false;
+
+            if (myId && players[myId]) {
+                camera.x = players[myId].x;
+                camera.y = players[myId].y;
+
+                currentVes = Math.floor(300 + (players[myId].radius - 25) * 50);
+                if (currentVes >= GOAL_VES) reachedGoal = true;
+
+                const pct = Math.min(100, Math.max(0, ((currentVes - 300) / (GOAL_VES - 300)) * 100));
+                document.getElementById('progressBarFill').style.width = pct + '%';
+                document.getElementById('progressVesText').innerText = `${currentVes} / ${GOAL_VES} VES`;
+
+                const statusTxt = document.getElementById('hudStatusText');
+                if (reachedGoal) {
+                    statusTxt.innerText = '🔓 ¡BORDES ABIERTOS! TOCA EL BORDE VERDE PARA SALIR';
+                    statusTxt.style.color = '#00e699';
+                } else {
+                    statusTxt.innerText = '🔒 BORDES BLOQUEADOS (LLEGA A 9,000 VES PARA ESCAPAR)';
+                    statusTxt.style.color = '#ff3366';
+                }
+            }
+
+            ctx.save();
+            ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
+
+            // 1. Bordes del mapa
+            ctx.lineWidth = 15;
+            if (reachedGoal) {
+                ctx.strokeStyle = '#00e699';
+                ctx.shadowColor = '#00e699';
+                ctx.shadowBlur = 20;
+            } else {
+                ctx.strokeStyle = '#ff0055';
+                ctx.shadowBlur = 0;
+            }
+            ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
+            ctx.shadowBlur = 0;
+
+            // 2. Comida
+            foods.forEach(f => {
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.radius || 4, 0, Math.PI * 2);
+                ctx.fillStyle = f.color || '#00e699';
+                ctx.fill();
+            });
+
+            // 3. Virus Mortales
+            viruses.forEach(v => {
+                drawVirus(v.x, v.y, v.radius);
+            });
+
+            // 4. Jugadores
+            Object.values(players).forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color || '#00e699';
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#fff';
+                ctx.stroke();
+
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.name, p.x, p.y + 5);
+            });
+
+            ctx.restore();
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
 </body>
 </html>
