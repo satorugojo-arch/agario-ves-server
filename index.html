@@ -25,4 +25,377 @@
         }
         #leaderboardBox h4 { color: #00ff88; text-align: center; margin-bottom: 8px; font-size: 13px; border-bottom: 1px solid #1e293b; padding-bottom: 4px; }
         .lb-item { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
-        .
+        .lb-name { color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 105px; }
+        .lb-ves { color: #00d2ff; font-weight: bold; }
+        
+        #loginOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 6, 13, 0.95); display: flex; justify-content: center; align-items: center; z-index: 100; pointer-events: auto; }
+        #loginBox { background: #0d1527; padding: 25px; border-radius: 16px; text-align: center; color: #fff; box-shadow: 0 0 35px rgba(0, 210, 255, 0.3); max-width: 90%; width: 380px; border: 1px solid #00d2ff44; position: relative; z-index: 101; }
+        #loginBox h1 { color: #00d2ff; font-size: 24px; margin-bottom: 8px; text-shadow: 0 0 10px #00d2ff; }
+        .banner-text { color: #ffcc00; font-size: 12px; font-weight: bold; margin-bottom: 12px; background: rgba(255, 204, 0, 0.1); padding: 8px; border-radius: 8px; border: 1px dashed #ffcc0066; }
+        .balance-card { background: #070c18; padding: 10px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #1e293b; }
+        .balance-amount { font-size: 24px; font-weight: bold; color: #00ff88; }
+        #playerName { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #1e293b; background: #070c18; color: #fff; font-size: 14px; text-align: center; outline: none; pointer-events: auto; }
+        
+        .skin-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; }
+        .color-opt { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #1e293b; transition: 0.2s; pointer-events: auto; }
+        .color-opt.selected { border: 3px solid #fff; transform: scale(1.15); box-shadow: 0 0 10px #fff; }
+        
+        .btn { width: 100%; padding: 11px; border-radius: 8px; border: none; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 8px; pointer-events: auto; }
+        #btnPlay { background: #00ff88; color: #050811; box-shadow: 0 0 15px rgba(0,255,136,0.4); }
+        #btnPlay:disabled { background: #1e293b; color: #64748b; cursor: not-allowed; box-shadow: none; }
+        .btn-row { display: flex; gap: 8px; }
+        #btnRecharge { background: #00d2ff; color: #050811; flex: 1; }
+        #btnWithdraw { background: #ff0055; color: #fff; flex: 1; }
+        
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.88); justify-content: center; align-items: center; z-index: 200; pointer-events: auto; }
+        .modal-content { background: #0d1527; padding: 20px; border-radius: 14px; width: 340px; max-width: 90%; color: #fff; text-align: left; border: 1px solid #00d2ff44; pointer-events: auto; }
+        .input-field { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #1e293b; background: #070c18; color: #fff; outline: none; font-size: 13px; pointer-events: auto; }
+        
+        #touchControls { position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px; background: rgba(0, 210, 255, 0.08); border: 2px solid rgba(0, 210, 255, 0.3); border-radius: 50%; display: none; z-index: 5; }
+        #joystickKnob { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: rgba(0, 255, 136, 0.7); border-radius: 50%; pointer-events: none; box-shadow: 0 0 10px #00ff88; }
+    </style>
+</head>
+<body>
+
+    <div id="topProgressContainer">
+        <div class="progress-title"><span>Meta de Salida</span><span id="progressVesText">300 / 9,000 VES</span></div>
+        <div class="progress-bar-bg"><div id="progressBarFill"></div></div>
+        <div id="hudStatusText">🔒 BORDES BLOQUEADOS (LLEGA A 9,000 VES PARA ESCAPAR)</div>
+    </div>
+
+    <div id="leaderboardBox">
+        <h4>🏆 TOP JUGADORES</h4>
+        <div id="lbList"><div style="text-align:center; color:#64748b;">Sin jugadores</div></div>
+    </div>
+
+    <div id="loginOverlay">
+        <div id="loginBox">
+            <h1>TRAGABOLÍVARES</h1>
+            <div class="banner-text">LLEGA A 9,000 VES Y ESCAPA POR EL BORDE VERDE. ¡SI TOCAS EL BORDE ROJO ANTES, MUERES!</div>
+            <div class="balance-card"><div style="font-size:11px; color:#94a3b8;">SALDO DISPONIBLE</div><div class="balance-amount"><span id="vesDisplay">1000</span> VES</div></div>
+            <input type="text" id="playerName" placeholder="Tu Apodo..." maxlength="12">
+            <div style="font-size:11px; color:#94a3b8; margin-bottom:6px;">COLOR DE ESFERA:</div>
+            <div class="skin-selector">
+                <div class="color-opt selected" style="background: #00ff88;" onclick="selectColor('#00ff88', this)"></div>
+                <div class="color-opt" style="background: #ff0055;" onclick="selectColor('#ff0055', this)"></div>
+                <div class="color-opt" style="background: #00d2ff;" onclick="selectColor('#00d2ff', this)"></div>
+                <div class="color-opt" style="background: #ffcc00;" onclick="selectColor('#ffcc00', this)"></div>
+                <div class="color-opt" style="background: #a855f7;" onclick="selectColor('#a855f7', this)"></div>
+            </div>
+            <button id="btnPlay" class="btn" onclick="tryPlay()">JUGAR (300 VES)</button>
+            <div class="btn-row">
+                <button id="btnRecharge" class="btn" onclick="openModal('rechargeModal')">RECARGAR</button>
+                <button id="btnWithdraw" class="btn" onclick="openModal('withdrawModal')">RETIRAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rechargeModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:#00d2ff; text-align:center; margin-bottom:8px;">RECARGAR SALDO</h3>
+            <div style="background:rgba(239, 68, 68, 0.2); color:#fca5a5; padding:6px; border-radius:6px; font-size:12px; text-align:center; font-weight:bold; margin-bottom:10px;">⚠️ RECARGA MÍNIMA: 1,000 VES</div>
+            <div style="background:#070c18; padding:10px; border-radius:8px; margin-bottom:10px; font-size:13px; border:1px solid #1e293b;">
+                <h4 style="color:#00ff88;">PAGO MÓVIL</h4><p><strong>Banco:</strong> Banesco (0134)</p><p><strong>C.I.:</strong> 12.345.678</p><p><strong>Teléfono:</strong> 0412-1234567</p>
+            </div>
+            <div style="background:#070c18; padding:10px; border-radius:8px; margin-bottom:10px; font-size:13px; border:1px solid #1e293b;">
+                <h4 style="color:#00ff88;">BINANCE PAY</h4><p><strong>Binance ID:</strong> 123456789</p>
+            </div>
+            <button class="btn" style="background:#64748b; color:#fff;" onclick="closeModal('rechargeModal')">VOLVER</button>
+        </div>
+    </div>
+
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content" style="border-color:#ff0055;">
+            <h3 style="color:#ff0055; text-align:center; margin-bottom:8px;">SOLICITAR RETIRO</h3>
+            <div style="font-size:11px; color:#94a3b8; margin-bottom:10px; text-align:center;">El retiro será verificado de forma segura desde el servidor hacia Telegram.</div>
+            <input type="number" id="withdrawAmount" class="input-field" placeholder="Monto a retirar en VES...">
+            <select id="withdrawMethod" class="input-field"><option value="Pago Móvil">Pago Móvil</option><option value="Binance Pay">Binance Pay</option></select>
+            <textarea id="withdrawData" class="input-field" style="height:60px;" placeholder="Ej: Banesco, CI: 12345678, Tel: 04121234567"></textarea>
+            <button class="btn" style="background:#00ff88; color:#050811;" onclick="processWithdraw()">ENVIAR A TELEGRAM</button>
+            <button class="btn" style="background:#64748b; color:#fff;" onclick="closeModal('withdrawModal')">VOLVER</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+    <div id="touchControls"><div id="joystickKnob"></div></div>
+
+    <script>
+        let userVes = 1000;
+        const ENTRY_FEE = 300;
+        const GOAL_VES = 9000;
+        let selectedColor = '#00ff88';
+
+        let ws = null;
+        let myId = null;
+        let players = {};
+        let foods = [];
+        let viruses = [];
+        let MAP_SIZE = 2000;
+
+        let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        let camera = { x: 1000, y: 1000 };
+        const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const touchControls = document.getElementById('touchControls');
+        const knob = document.getElementById('joystickKnob');
+
+        function selectColor(color, el) {
+            selectedColor = color;
+            document.querySelectorAll('.color-opt').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function updateBalanceDisplay() {
+            document.getElementById('vesDisplay').innerText = userVes;
+            const btnPlay = document.getElementById('btnPlay');
+            if (userVes < ENTRY_FEE) { 
+                btnPlay.disabled = true; 
+                btnPlay.innerText = `SALDO INSUFICIENTE (< ${ENTRY_FEE} VES)`; 
+            } else { 
+                btnPlay.disabled = false; 
+                btnPlay.innerText = `JUGAR (${ENTRY_FEE} VES)`; 
+            }
+        }
+        updateBalanceDisplay();
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function processWithdraw() {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const method = document.getElementById('withdrawMethod').value;
+            const details = document.getElementById('withdrawData').value;
+
+            if (isNaN(amount) || amount <= 0) return alert('Ingresa un monto válido.');
+            if (!details.trim()) return alert('Ingresa los datos para la transferencia.');
+            if (!ws || ws.readyState !== WebSocket.OPEN || !myId) return alert('Debes estar conectado e iniciar la partida.');
+
+            ws.send(JSON.stringify({ type: 'request_withdraw', amount: amount, method: method, details: details }));
+        }
+
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        if (isMobile) touchControls.style.display = 'block';
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isMobile) { mouse.x = e.clientX; mouse.y = e.clientY; sendMovement(); }
+        });
+
+        const joyRadius = 60;
+        touchControls.addEventListener('touchstart', handleTouch, false);
+        touchControls.addEventListener('touchmove', handleTouch, false);
+        touchControls.addEventListener('touchend', () => { knob.style.transform = `translate(0px, 0px)`; }, false);
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const rect = touchControls.getBoundingClientRect();
+            const touch = e.touches[0];
+            let dx = touch.clientX - (rect.left + rect.width / 2);
+            let dy = touch.clientY - (rect.top + rect.height / 2);
+            const dist = Math.hypot(dx, dy);
+            if (dist > joyRadius) { dx = (dx / dist) * joyRadius; dy = (dy / dist) * joyRadius; }
+            knob.style.transform = `translate(${dx}px, ${dy}px)`;
+            mouse.x = (window.innerWidth / 2) + (dx / joyRadius) * 200;
+            mouse.y = (window.innerHeight / 2) + (dy / joyRadius) * 200;
+            sendMovement();
+        }
+
+        function sendMovement() {
+            if (ws && ws.readyState === WebSocket.OPEN && myId && players[myId]) {
+                const myCell = players[myId];
+                ws.send(JSON.stringify({ type: 'move', targetX: myCell.x + (mouse.x - window.innerWidth / 2), targetY: myCell.y + (mouse.y - window.innerHeight / 2) }));
+            }
+        }
+
+        function tryPlay() {
+            if (userVes < ENTRY_FEE) return;
+
+            const btnPlay = document.getElementById('btnPlay');
+            btnPlay.disabled = true;
+            btnPlay.innerText = "CONECTANDO...";
+
+            try {
+                ws = new WebSocket('wss://agario-ves-server.onrender.com');
+            } catch (err) {
+                alert("Error al iniciar el WebSocket.");
+                updateBalanceDisplay();
+                return;
+            }
+
+            ws.onopen = () => {
+                userVes -= ENTRY_FEE;
+                updateBalanceDisplay();
+                const pName = document.getElementById('playerName').value || 'Jugador';
+                ws.send(JSON.stringify({ type: 'join', name: pName, color: selectedColor }));
+            };
+
+            ws.onerror = () => {
+                alert("⚠️ Error de conexión con el servidor. Intenta nuevamente.");
+                updateBalanceDisplay();
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'init') {
+                    myId = data.id; 
+                    if (data.mapSize) MAP_SIZE = data.mapSize;
+                    document.getElementById('loginOverlay').style.display = 'none';
+                } else if (data.type === 'state') {
+                    players = data.players; 
+                    foods = data.foods || []; 
+                    viruses = data.viruses || [];
+                    
+                    if (data.leaderboard && data.leaderboard.length > 0) {
+                        document.getElementById('lbList').innerHTML = data.leaderboard.map((item, idx) => `
+                            <div class="lb-item"><span class="lb-name">${idx + 1}. ${item.name}</span><span class="lb-ves">${item.ves} VES</span></div>
+                        `).join('');
+                    } else { 
+                        document.getElementById('lbList').innerHTML = '<div style="text-align:center; color:#64748b;">Sin jugadores</div>'; 
+                    }
+
+                    if (myId && !players[myId]) {
+                        ws.close(); 
+                        alert('¡Has sido devorado por otro jugador!');
+                        document.getElementById('loginOverlay').style.display = 'flex'; 
+                        myId = null;
+                        updateBalanceDisplay();
+                    }
+                } else if (data.type === 'withdraw_response') {
+                    if (data.success) { 
+                        userVes = data.newVes; 
+                        updateBalanceDisplay(); 
+                        closeModal('withdrawModal'); 
+                        alert('✅ ' + data.msg); 
+                    } else { 
+                        alert('❌ ' + data.msg); 
+                    }
+                } else if (data.type === 'killed_by_virus') {
+                    ws.close(); 
+                    alert('💥 ¡CHOCASTE CON UN VIRUS MORTAL Y EXPLOTASTE!');
+                    document.getElementById('loginOverlay').style.display = 'flex'; 
+                    myId = null;
+                    updateBalanceDisplay();
+                } else if (data.type === 'killed_by_border') { 
+                    ws.close(); 
+                    alert('🛑 ¡TOCASTE EL BORDE SIN TENER LOS 9,000 VES Y EXPLOTASTE!');
+                    document.getElementById('loginOverlay').style.display = 'flex'; 
+                    myId = null;
+                    updateBalanceDisplay();
+                } else if (data.type === 'escaped') {
+                    userVes += data.vesGained; 
+                    updateBalanceDisplay(); 
+                    ws.close();
+                    alert(`🎉 ¡ESCAPASTE CON ÉXITO! Te has retirado con ${data.vesGained} VES.`);
+                    document.getElementById('loginOverlay').style.display = 'flex'; 
+                    myId = null;
+                    updateBalanceDisplay();
+                }
+            };
+
+            ws.onclose = () => { 
+                myId = null; 
+                updateBalanceDisplay();
+            };
+        }
+
+        function drawGrid() {
+            const gridSize = 80;
+            ctx.save();
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            for (let x = 0; x <= MAP_SIZE; x += gridSize) {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, MAP_SIZE);
+            }
+            for (let y = 0; y <= MAP_SIZE; y += gridSize) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(MAP_SIZE, y);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawVirus(x, y, radius) {
+            ctx.save(); ctx.beginPath();
+            const spikes = 16; const outerRadius = radius; const innerRadius = radius - 6;
+            for (let i = 0; i < spikes; i++) {
+                let angle = (Math.PI * 2 / spikes) * i;
+                let rx = x + Math.cos(angle) * outerRadius; let ry = y + Math.sin(angle) * outerRadius;
+                if (i === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+                angle += (Math.PI * 2 / spikes) / 2;
+                rx = x + Math.cos(angle) * innerRadius; ry = y + Math.sin(angle) * innerRadius;
+                ctx.lineTo(rx, ry);
+            }
+            ctx.closePath();
+            ctx.fillStyle = '#00ff88'; ctx.fill();
+            ctx.lineWidth = 2; ctx.strokeStyle = '#009944'; ctx.stroke();
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let currentVes = 300; let reachedGoal = false;
+
+            if (myId && players[myId]) {
+                camera.x = players[myId].x; camera.y = players[myId].y;
+                currentVes = Math.floor(300 + (players[myId].radius - 25) * 50);
+                if (currentVes >= GOAL_VES) reachedGoal = true;
+
+                const pct = Math.min(100, Math.max(0, ((currentVes - 300) / (GOAL_VES - 300)) * 100));
+                document.getElementById('progressBarFill').style.width = pct + '%';
+                document.getElementById('progressVesText').innerText = `${currentVes} / ${GOAL_VES} VES`;
+
+                const statusTxt = document.getElementById('hudStatusText');
+                if (reachedGoal) {
+                    statusTxt.innerText = '🔓 ¡BORDES ABIERTOS! TOCA EL BORDE VERDE PARA SALIR';
+                    statusTxt.style.color = '#00ff88';
+                } else {
+                    statusTxt.innerText = '🔒 BORDES BLOQUEADOS (SI TOCAS EL BORDE ROJO, MUERES)';
+                    statusTxt.style.color = '#ff3366';
+                }
+            }
+
+            ctx.save();
+            ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
+
+            ctx.fillStyle = '#0b1329';
+            ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+
+            drawGrid();
+
+            ctx.lineWidth = 10;
+            if (reachedGoal) {
+                ctx.strokeStyle = '#00ff88';
+            } else {
+                ctx.strokeStyle = '#ff0055';
+            }
+            ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
+
+            foods.forEach(f => {
+                ctx.beginPath(); ctx.arc(f.x, f.y, f.radius || 4, 0, Math.PI * 2);
+                ctx.fillStyle = f.color || '#00d2ff'; ctx.fill();
+            });
+
+            viruses.forEach(v => { drawVirus(v.x, v.y, v.radius); });
+
+            Object.values(players).forEach(p => {
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color || '#00ff88'; ctx.fill();
+                ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Arial'; ctx.textAlign = 'center'; ctx.fillText(p.name, p.x, p.y + 4);
+            });
+
+            ctx.restore();
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
