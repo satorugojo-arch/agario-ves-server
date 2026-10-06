@@ -208,20 +208,31 @@
 
         function tryPlay() {
             if (userVes < ENTRY_FEE) return;
-            userVes -= ENTRY_FEE;
-            updateBalanceDisplay();
-            document.getElementById('loginOverlay').style.display = 'none';
+            
+            const btnPlay = document.getElementById('btnPlay');
+            btnPlay.disabled = true;
+            btnPlay.innerText = "CONECTANDO CON SERVIDOR...";
+
             ws = new WebSocket('wss://agario-ves-server.onrender.com');
 
             ws.onopen = () => {
+                userVes -= ENTRY_FEE;
+                updateBalanceDisplay();
                 const pName = document.getElementById('playerName').value || 'Jugador';
                 ws.send(JSON.stringify({ type: 'join', name: pName, color: selectedColor }));
+            };
+
+            ws.onerror = () => {
+                alert("⚠️ Error de conexión. El servidor en Render puede estar despertando, intenta de nuevo en unos segundos.");
+                updateBalanceDisplay();
             };
 
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 if (data.type === 'init') {
-                    myId = data.id; if (data.mapSize) MAP_SIZE = data.mapSize;
+                    myId = data.id; 
+                    if (data.mapSize) MAP_SIZE = data.mapSize;
+                    document.getElementById('loginOverlay').style.display = 'none';
                 } else if (data.type === 'state') {
                     players = data.players; foods = data.foods || []; viruses = data.viruses || [];
                     if (data.leaderboard && data.leaderboard.length > 0) {
@@ -233,6 +244,7 @@
                     if (myId && !players[myId]) {
                         ws.close(); alert('¡Has sido devorado por otro jugador!');
                         document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
+                        updateBalanceDisplay();
                     }
                 } else if (data.type === 'withdraw_response') {
                     if (data.success) { userVes = data.newVes; updateBalanceDisplay(); closeModal('withdrawModal'); alert('✅ ' + data.msg); } 
@@ -240,19 +252,24 @@
                 } else if (data.type === 'killed_by_virus') {
                     ws.close(); alert('💥 ¡CHOCASTE CON UN VIRUS MORTAL Y EXPLOTASTE!');
                     document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
+                    updateBalanceDisplay();
                 } else if (data.type === 'killed_by_border') { 
                     ws.close(); alert('🛑 ¡TOCASTE EL BORDE ROJO SIN TENER LOS 9,000 VES Y EXPLOTASTE!');
                     document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
+                    updateBalanceDisplay();
                 } else if (data.type === 'escaped') {
                     userVes += data.vesGained; updateBalanceDisplay(); ws.close();
                     alert(`🎉 ¡ESCAPASTE CON ÉXITO! Te has retirado con ${data.vesGained} VES.`);
                     document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
+                    updateBalanceDisplay();
                 }
             };
-            ws.onclose = () => { myId = null; };
+            ws.onclose = () => { 
+                myId = null; 
+                updateBalanceDisplay();
+            };
         }
 
-        // Cuadrícula Vórtex optimizada y visible en todo el mapa
         function drawVortexGrid() {
             const gridSize = 100;
             ctx.save();
@@ -318,13 +335,11 @@
             ctx.save();
             ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
 
-            // Fondo de color sólido para evitar pantallas negras y resaltar el vórtex
             ctx.fillStyle = '#070c18';
             ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
 
             drawVortexGrid();
 
-            // Bordes del mapa visuales
             ctx.lineWidth = 14;
             if (reachedGoal) {
                 ctx.strokeStyle = '#00ff88'; ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 25;
@@ -342,3 +357,17 @@
             viruses.forEach(v => { drawVirus(v.x, v.y, v.radius); });
 
             Object.values(players).forEach(p => {
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color || '#00ff88'; ctx.shadowColor = p.color || '#00ff88'; ctx.shadowBlur = 12; ctx.fill();
+                ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke(); ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.fillText(p.name, p.x, p.y + 5);
+            });
+
+            ctx.restore();
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
