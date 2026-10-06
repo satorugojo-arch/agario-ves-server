@@ -14,12 +14,12 @@
         body, html {
             width: 100%; height: 100%;
             overflow: hidden;
-            background-color: #050811;
+            background-color: #03060d;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         #gameCanvas {
             display: block; width: 100vw; height: 100vh;
-            background-color: #070c18;
+            background-color: #03060d;
         }
         #topProgressContainer {
             position: absolute;
@@ -76,7 +76,7 @@
         #loginOverlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 8, 17, 0.95);
+            background: rgba(3, 6, 13, 0.95);
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 10;
@@ -211,7 +211,7 @@
         <div class="modal-content">
             <h3 style="color:#00d2ff; text-align:center; margin-bottom:8px;">RECARGAR SALDO</h3>
             <div style="background:rgba(239, 68, 68, 0.2); color:#fca5a5; padding:6px; border-radius:6px; font-size:12px; text-align:center; font-weight:bold; margin-bottom:10px;">
-                ⚠ RECARGA MÍNIMA: 1,000 VES
+                ⚠️ RECARGA MÍNIMA: 1,000 VES
             </div>
             <div style="background:#070c18; padding:10px; border-radius:8px; margin-bottom:10px; font-size:13px; border:1px solid #1e293b;">
                 <h4 style="color:#00ff88;">PAGO MÓVIL</h4>
@@ -265,7 +265,7 @@
         let MAP_SIZE = 5000;
 
         let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-        let camera = { x: MAP_SIZE / 2, y: MAP_SIZE / 2 };
+        let camera = { x: 2500, y: 2500 };
         const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
         const canvas = document.getElementById('gameCanvas');
@@ -313,7 +313,6 @@
                 return;
             }
 
-            // Petición enviada al servidor para validación estricta
             ws.send(JSON.stringify({
                 type: 'request_withdraw',
                 amount: amount,
@@ -477,28 +476,28 @@
             ctx.restore();
         }
 
-        function drawVortexGrid(gridSize) {
+        // DIBUJO DIRECTO DE LA CUADRÍCULA VÓRTEX NEÓN VISIBLE
+        function drawVortexGrid() {
+            const gridSize = 80;
             ctx.save();
-            ctx.strokeStyle = 'rgba(0, 210, 255, 0.12)';
-            ctx.lineWidth = 1.5;
-            ctx.shadowColor = '#00d2ff';
-            ctx.shadowBlur = 4;
+            ctx.strokeStyle = '#00d2ff';
+            ctx.globalAlpha = 0.25;
+            ctx.lineWidth = 2;
 
-            const startX = Math.floor((camera.x - canvas.width / 2) / gridSize) * gridSize;
-            const endX = startX + canvas.width + gridSize * 2;
-            const startY = Math.floor((camera.y - canvas.height / 2) / gridSize) * gridSize;
-            const endY = startY + canvas.height + gridSize * 2;
+            for (let x = 0; x <= MAP_SIZE; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, MAP_SIZE);
+                ctx.stroke();
+            }
 
-            ctx.beginPath();
-            for (let x = startX; x <= endX; x += gridSize) {
-                ctx.moveTo(x, startY);
-                ctx.lineTo(x, endY);
+            for (let y = 0; y <= MAP_SIZE; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(MAP_SIZE, y);
+                ctx.stroke();
             }
-            for (let y = startY; y <= endY; y += gridSize) {
-                ctx.moveTo(startX, y);
-                ctx.lineTo(endX, y);
-            }
-            ctx.stroke();
+
             ctx.restore();
         }
 
@@ -532,9 +531,11 @@
             ctx.save();
             ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
 
-            drawVortexGrid(70);
+            // 1. Dibuja las líneas Vórtex Neón
+            drawVortexGrid();
 
-            ctx.lineWidth = 12;
+            // 2. Bordes del mapa con brillo Neón
+            ctx.lineWidth = 14;
             if (reachedGoal) {
                 ctx.strokeStyle = '#00ff88';
                 ctx.shadowColor = '#00ff88';
@@ -542,11 +543,12 @@
             } else {
                 ctx.strokeStyle = '#ff0055';
                 ctx.shadowColor = '#ff0055';
-                ctx.shadowBlur = 15;
+                ctx.shadowBlur = 20;
             }
             ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
             ctx.shadowBlur = 0;
 
+            // 3. Comida
             foods.forEach(f => {
                 ctx.beginPath();
                 ctx.arc(f.x, f.y, f.radius || 4, 0, Math.PI * 2);
@@ -554,16 +556,18 @@
                 ctx.fill();
             });
 
+            // 4. Virus Mortales
             viruses.forEach(v => {
                 drawVirus(v.x, v.y, v.radius);
             });
 
+            // 5. Jugadores
             Object.values(players).forEach(p => {
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                 ctx.fillStyle = p.color || '#00ff88';
                 ctx.shadowColor = p.color || '#00ff88';
-                ctx.shadowBlur = 10;
+                ctx.shadowBlur = 12;
                 ctx.fill();
                 ctx.lineWidth = 3;
                 ctx.strokeStyle = '#fff';
