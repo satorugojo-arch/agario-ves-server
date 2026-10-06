@@ -252,21 +252,24 @@
             ws.onclose = () => { myId = null; };
         }
 
+        // Cuadrícula Vórtex optimizada y visible en todo el mapa
         function drawVortexGrid() {
             const gridSize = 100;
             ctx.save();
-            ctx.strokeStyle = '#00d2ff'; 
-            ctx.lineWidth = 3; 
-            ctx.globalAlpha = 0.4; 
-            ctx.shadowColor = '#00d2ff';
-            ctx.shadowBlur = 5;
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.25)';
+            ctx.lineWidth = 2;
+
+            const startX = Math.max(0, camera.x - canvas.width / 2 - gridSize);
+            const endX = Math.min(MAP_SIZE, camera.x + canvas.width / 2 + gridSize);
+            const startY = Math.max(0, camera.y - canvas.height / 2 - gridSize);
+            const endY = Math.min(MAP_SIZE, camera.y + canvas.height / 2 + gridSize);
 
             ctx.beginPath();
-            for (let x = 0; x <= MAP_SIZE; x += gridSize) {
-                ctx.moveTo(x, 0); ctx.lineTo(x, MAP_SIZE);
+            for (let x = startX - (startX % gridSize); x <= endX; x += gridSize) {
+                ctx.moveTo(x, startY); ctx.lineTo(x, endY);
             }
-            for (let y = 0; y <= MAP_SIZE; y += gridSize) {
-                ctx.moveTo(0, y); ctx.lineTo(MAP_SIZE, y);
+            for (let y = startY - (startY % gridSize); y <= endY; y += gridSize) {
+                ctx.moveTo(startX, y); ctx.lineTo(endX, y);
             }
             ctx.stroke();
             ctx.restore();
@@ -315,6 +318,10 @@
             ctx.save();
             ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
 
+            // Fondo de color sólido para evitar pantallas negras y resaltar el vórtex
+            ctx.fillStyle = '#070c18';
+            ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+
             drawVortexGrid();
 
             // Bordes del mapa visuales
@@ -335,17 +342,3 @@
             viruses.forEach(v => { drawVirus(v.x, v.y, v.radius); });
 
             Object.values(players).forEach(p => {
-                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.color || '#00ff88'; ctx.shadowColor = p.color || '#00ff88'; ctx.shadowBlur = 12; ctx.fill();
-                ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke(); ctx.shadowBlur = 0;
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.fillText(p.name, p.x, p.y + 5);
-            });
-
-            ctx.restore();
-            requestAnimationFrame(draw);
-        }
-
-        draw();
-    </script>
-</body>
-</html>
