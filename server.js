@@ -4,8 +4,8 @@ const PORT = process.env.PORT || 3000;
 const wss = new WebSocket.Server({ port: PORT });
 
 // CONFIGURACIÓN DE TU BOT DE TELEGRAM
-const TELEGRAM_BOT_TOKEN = "PEGA_AQUI_TU_TELEGRAM_BOT_TOKEN";
-const TELEGRAM_CHAT_ID = "PEGA_AQUI_TU_TELEGRAM_CHAT_ID";
+const TELEGRAM_BOT_TOKEN = "8934476656:AAFNjEHnYKDstq89rQjxAOwn6cUU2NvjwpM";
+const TELEGRAM_CHAT_ID = "1564515834";
 
 let players = {};
 let foods = [];
@@ -37,7 +37,6 @@ function initViruses() {
 initFoods();
 initViruses();
 
-// Función segura para enviar notificaciones a Telegram
 async function sendTelegramMessage(text) {
     if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.includes("PEGA_AQUI")) return;
     try {
@@ -45,11 +44,7 @@ async function sendTelegramMessage(text) {
         await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                text: text,
-                parse_mode: 'Markdown'
-            })
+            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text, parse_mode: 'Markdown' })
         });
     } catch (err) {
         console.error('Error enviando a Telegram:', err);
@@ -90,65 +85,46 @@ wss.on('connection', (ws) => {
                     
                     const currentVes = Math.floor(300 + (player.radius - 25) * 50);
 
-                    if (currentVes >= 9000) {
-                        if (nextX <= 0 || nextX >= MAP_SIZE || nextY <= 0 || nextY >= MAP_SIZE) {
+                    // LÓGICA DE BORDES: Si el jugador toca cualquier borde del mapa
+                    if (nextX <= player.radius || nextX >= MAP_SIZE - player.radius || nextY <= player.radius || nextY >= MAP_SIZE - player.radius) {
+                        if (currentVes >= 9000) {
+                            // Toca el borde y tiene >= 9000: ESCAPA
                             if (player.ws && player.ws.readyState === WebSocket.OPEN) {
                                 player.ws.send(JSON.stringify({ type: 'escaped', vesGained: currentVes }));
                             }
-                            delete players[playerId];
-                            return;
+                        } else {
+                            // Toca el borde y tiene < 9000: MUERE ELIMINADO POR EL BORDE ROJO
+                            if (player.ws && player.ws.readyState === WebSocket.OPEN) {
+                                player.ws.send(JSON.stringify({ type: 'killed_by_border' }));
+                            }
                         }
+                        delete players[playerId];
+                        return;
                     }
 
-                    player.x = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextX));
-                    player.y = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextY));
+                    player.x = nextX;
+                    player.y = nextY;
                 }
             }
 
-            // PROCESAR RETIRO DE FORMA SEGURA DESDE EL SERVIDOR
             if (data.type === 'request_withdraw') {
                 const player = players[playerId];
                 const requestedAmount = parseFloat(data.amount);
 
-                if (!player) {
-                    return ws.send(JSON.stringify({ type: 'withdraw_response', success: false, msg: 'Debes estar jugando para solicitar retiro.' }));
-                }
+                if (!player) return ws.send(JSON.stringify({ type: 'withdraw_response', success: false, msg: 'Debes estar jugando.' }));
 
-                // Saldo real validado por el servidor
                 const realBalance = Math.floor(300 + (player.radius - 25) * 50);
 
-                if (isNaN(requestedAmount) || requestedAmount <= 0) {
-                    return ws.send(JSON.stringify({ type: 'withdraw_response', success: false, msg: 'Monto inválido.' }));
-                }
+                if (isNaN(requestedAmount) || requestedAmount <= 0) return ws.send(JSON.stringify({ type: 'withdraw_response', success: false, msg: 'Monto inválido.' }));
+                if (requestedAmount > realBalance) return ws.send(JSON.stringify({ type: 'withdraw_response', success: false, msg: `¡TRAMPA DETECTADA! Tu saldo real es de ${realBalance} VES.` }));
 
-                // VALIDACIÓN ANTI-TRAMPA: Si el monto pedido supera el saldo real registrado por el servidor
-                if (requestedAmount > realBalance) {
-                    return ws.send(JSON.stringify({ 
-                        type: 'withdraw_response', 
-                        success: false, 
-                        msg: `¡TRAMPA DETECTADA! Tu saldo real es de ${realBalance} VES.` 
-                    }));
-                }
-
-                // Reducir la masa/saldo equivalente tras el retiro
                 const vesRestantes = realBalance - requestedAmount;
                 player.radius = 25 + (vesRestantes - 300) / 50;
 
-                // Notificar directamente al Telegram del Administrador
-                const telegramMsg = `💸 *NUEVA SOLICITUD DE RETIRO*\n\n` +
-                    `👤 *Jugador:* ${player.name}\n` +
-                    `💰 *Monto Solicitado:* ${requestedAmount} VES\n` +
-                    `💳 *Método:* ${data.method}\n` +
-                    `📋 *Datos:* \`${data.details}\``;
-
+                const telegramMsg = `💸 *NUEVA SOLICITUD DE RETIRO*\n\n👤 *Jugador:* ${player.name}\n💰 *Monto Solicitado:* ${requestedAmount} VES\n💳 *Método:* ${data.method}\n📋 *Datos:* \`${data.details}\``;
                 await sendTelegramMessage(telegramMsg);
 
-                ws.send(JSON.stringify({ 
-                    type: 'withdraw_response', 
-                    success: true, 
-                    msg: `Solicitud enviada a Telegram con éxito.`,
-                    newVes: vesRestantes 
-                }));
+                ws.send(JSON.stringify({ type: 'withdraw_response', success: true, msg: `Solicitud enviada a Telegram.`, newVes: vesRestantes }));
             }
 
         } catch (e) {
@@ -156,9 +132,7 @@ wss.on('connection', (ws) => {
         }
     });
 
-    ws.on('close', () => {
-        delete players[playerId];
-    });
+    ws.on('close', () => { delete players[playerId]; });
 });
 
 setInterval(() => {
@@ -166,17 +140,12 @@ setInterval(() => {
         foods.forEach((f, index) => {
             if (Math.hypot(p.x - f.x, p.y - f.y) < p.radius) {
                 p.radius += 0.2;
-                foods[index] = {
-                    x: Math.random() * MAP_SIZE,
-                    y: Math.random() * MAP_SIZE,
-                    color: `hsl(${Math.random() * 360}, 100%, 50%)`
-                };
+                foods[index] = { x: Math.random() * MAP_SIZE, y: Math.random() * MAP_SIZE, color: `hsl(${Math.random() * 360}, 100%, 50%)` };
             }
         });
 
         viruses.forEach(v => {
-            const dist = Math.hypot(p.x - v.x, p.y - v.y);
-            if (dist < p.radius + v.radius - 10) {
+            if (Math.hypot(p.x - v.x, p.y - v.y) < p.radius + v.radius - 10) {
                 if (p.ws && p.ws.readyState === WebSocket.OPEN) {
                     p.ws.send(JSON.stringify({ type: 'killed_by_virus' }));
                 }
@@ -193,8 +162,7 @@ setInterval(() => {
                 const p2 = playerList[j];
 
                 if (p1 && p2 && p1.radius > p2.radius * 1.1) {
-                    const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-                    if (dist < p1.radius) {
+                    if (Math.hypot(p1.x - p2.x, p1.y - p2.y) < p1.radius) {
                         p1.radius += p2.radius * 0.666;
                         delete players[p2.id];
                     }
@@ -208,33 +176,13 @@ setInterval(() => {
 
     Object.values(players).forEach(p => {
         const vesVal = Math.floor(300 + (p.radius - 25) * 50);
-        publicPlayers[p.id] = {
-            id: p.id,
-            name: p.name,
-            x: p.x,
-            y: p.y,
-            radius: p.radius,
-            color: p.color
-        };
+        publicPlayers[p.id] = { id: p.id, name: p.name, x: p.x, y: p.y, radius: p.radius, color: p.color };
         leaderboardArray.push({ name: p.name, ves: vesVal });
     });
 
     leaderboardArray.sort((a, b) => b.ves - a.ves);
     const top5 = leaderboardArray.slice(0, 5);
 
-    const stateMsg = JSON.stringify({
-        type: 'state',
-        players: publicPlayers,
-        foods: foods,
-        viruses: viruses,
-        leaderboard: top5
-    });
-
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(stateMsg);
-        }
-    });
+    const stateMsg = JSON.stringify({ type: 'state', players: publicPlayers, foods: foods, viruses: viruses, leaderboard: top5 });
+    wss.clients.forEach(c => { if (c.readyState === WebSocket.OPEN) c.send(stateMsg); });
 }, 1000 / 30);
-
-console.log(`Servidor TRAGABOLIVARES activo con retiros directos a Telegram.`);
