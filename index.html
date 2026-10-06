@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
         body, html { width: 100%; height: 100%; overflow: hidden; background-color: #03060d; font-family: sans-serif; }
-        #gameCanvas { display: block; width: 100vw; height: 100vh; background-color: #03060d; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; background-color: #03060d; position: absolute; top: 0; left: 0; z-index: 1; }
         
         #topProgressContainer {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 480px;
@@ -28,28 +28,30 @@
         .lb-name { color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 105px; }
         .lb-ves { color: #00d2ff; font-weight: bold; }
         
-        #loginOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 6, 13, 0.95); display: flex; justify-content: center; align-items: center; z-index: 10; }
-        #loginBox { background: #0d1527; padding: 25px; border-radius: 16px; text-align: center; color: #fff; box-shadow: 0 0 35px rgba(0, 210, 255, 0.3); max-width: 90%; width: 380px; border: 1px solid #00d2ff44; }
+        /* CAPA DE LOGIN ASEGURADA CON Z-INDEX ALTO Y PUNTERO ACTIVO */
+        #loginOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 6, 13, 0.95); display: flex; justify-content: center; align-items: center; z-index: 100; pointer-events: auto; }
+        #loginBox { background: #0d1527; padding: 25px; border-radius: 16px; text-align: center; color: #fff; box-shadow: 0 0 35px rgba(0, 210, 255, 0.3); max-width: 90%; width: 380px; border: 1px solid #00d2ff44; position: relative; z-index: 101; }
         #loginBox h1 { color: #00d2ff; font-size: 24px; margin-bottom: 8px; text-shadow: 0 0 10px #00d2ff; }
         .banner-text { color: #ffcc00; font-size: 12px; font-weight: bold; margin-bottom: 12px; background: rgba(255, 204, 0, 0.1); padding: 8px; border-radius: 8px; border: 1px dashed #ffcc0066; }
         .balance-card { background: #070c18; padding: 10px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #1e293b; }
         .balance-amount { font-size: 24px; font-weight: bold; color: #00ff88; }
-        #playerName { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #1e293b; background: #070c18; color: #fff; font-size: 14px; text-align: center; outline: none; }
+        #playerName { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #1e293b; background: #070c18; color: #fff; font-size: 14px; text-align: center; outline: none; pointer-events: auto; }
         
         .skin-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; }
-        .color-opt { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #1e293b; transition: 0.2s; }
+        .color-opt { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #1e293b; transition: 0.2s; pointer-events: auto; }
         .color-opt.selected { border: 3px solid #fff; transform: scale(1.15); box-shadow: 0 0 10px #fff; }
         
-        .btn { width: 100%; padding: 11px; border-radius: 8px; border: none; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 8px; }
+        .btn { width: 100%; padding: 11px; border-radius: 8px; border: none; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 8px; pointer-events: auto; }
         #btnPlay { background: #00ff88; color: #050811; box-shadow: 0 0 15px rgba(0,255,136,0.4); }
         #btnPlay:disabled { background: #1e293b; color: #64748b; cursor: not-allowed; box-shadow: none; }
         .btn-row { display: flex; gap: 8px; }
         #btnRecharge { background: #00d2ff; color: #050811; flex: 1; }
         #btnWithdraw { background: #ff0055; color: #fff; flex: 1; }
         
-        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.88); justify-content: center; align-items: center; z-index: 20; }
-        .modal-content { background: #0d1527; padding: 20px; border-radius: 14px; width: 340px; max-width: 90%; color: #fff; text-align: left; border: 1px solid #00d2ff44; }
-        .input-field { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #1e293b; background: #070c18; color: #fff; outline: none; font-size: 13px; }
+        /* MODALES CON Z-INDEX SUPERIOR */
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.88); justify-content: center; align-items: center; z-index: 200; pointer-events: auto; }
+        .modal-content { background: #0d1527; padding: 20px; border-radius: 14px; width: 340px; max-width: 90%; color: #fff; text-align: left; border: 1px solid #00d2ff44; pointer-events: auto; }
+        .input-field { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #1e293b; background: #070c18; color: #fff; outline: none; font-size: 13px; pointer-events: auto; }
         
         #touchControls { position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px; background: rgba(0, 210, 255, 0.08); border: 2px solid rgba(0, 210, 255, 0.3); border-radius: 50%; display: none; z-index: 5; }
         #joystickKnob { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: rgba(0, 255, 136, 0.7); border-radius: 50%; pointer-events: none; box-shadow: 0 0 10px #00ff88; }
@@ -381,6 +383,12 @@
             ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
             ctx.shadowBlur = 0;
 
+            events = foods.forEach(f => {
+                ctx.beginPath(); ctx.arc(f.x, f.y, f.radius || 4, 0, Math.PI * 2);
+                ctx.fillStyle = f.color || '#00d2ff'; ctx.fill();
+            });
+
+            // Arreglo directo de render de comida
             foods.forEach(f => {
                 ctx.beginPath(); ctx.arc(f.x, f.y, f.radius || 4, 0, Math.PI * 2);
                 ctx.fillStyle = f.color || '#00d2ff'; ctx.fill();
