@@ -125,7 +125,7 @@
         const GOAL_VES = 9000;
         let selectedColor = '#00ff88';
 
-        let ws;
+        let ws = null;
         let myId = null;
         let players = {};
         let foods = [];
@@ -150,8 +150,13 @@
         function updateBalanceDisplay() {
             document.getElementById('vesDisplay').innerText = userVes;
             const btnPlay = document.getElementById('btnPlay');
-            if (userVes < ENTRY_FEE) { btnPlay.disabled = true; btnPlay.innerText = `SALDO INSUFICIENTE (< ${ENTRY_FEE} VES)`; } 
-            else { btnPlay.disabled = false; btnPlay.innerText = `JUGAR (${ENTRY_FEE} VES)`; }
+            if (userVes < ENTRY_FEE) { 
+                btnPlay.disabled = true; 
+                btnPlay.innerText = `SALDO INSUFICIENTE (< ${ENTRY_FEE} VES)`; 
+            } else { 
+                btnPlay.disabled = false; 
+                btnPlay.innerText = `JUGAR (${ENTRY_FEE} VES)`; 
+            }
         }
         updateBalanceDisplay();
 
@@ -208,12 +213,18 @@
 
         function tryPlay() {
             if (userVes < ENTRY_FEE) return;
-            
+
             const btnPlay = document.getElementById('btnPlay');
             btnPlay.disabled = true;
-            btnPlay.innerText = "CONECTANDO CON SERVIDOR...";
+            btnPlay.innerText = "CONECTANDO...";
 
-            ws = new WebSocket('wss://agario-ves-server.onrender.com');
+            try {
+                ws = new WebSocket('wss://agario-ves-server.onrender.com');
+            } catch (err) {
+                alert("Error al iniciar el WebSocket.");
+                updateBalanceDisplay();
+                return;
+            }
 
             ws.onopen = () => {
                 userVes -= ENTRY_FEE;
@@ -223,7 +234,7 @@
             };
 
             ws.onerror = () => {
-                alert("⚠️ Error de conexión. El servidor en Render puede estar despertando, intenta de nuevo en unos segundos.");
+                alert("⚠️ Error de conexión con el servidor. Intenta nuevamente.");
                 updateBalanceDisplay();
             };
 
@@ -234,36 +245,57 @@
                     if (data.mapSize) MAP_SIZE = data.mapSize;
                     document.getElementById('loginOverlay').style.display = 'none';
                 } else if (data.type === 'state') {
-                    players = data.players; foods = data.foods || []; viruses = data.viruses || [];
+                    players = data.players; 
+                    foods = data.foods || []; 
+                    viruses = data.viruses || [];
+                    
                     if (data.leaderboard && data.leaderboard.length > 0) {
                         document.getElementById('lbList').innerHTML = data.leaderboard.map((item, idx) => `
                             <div class="lb-item"><span class="lb-name">${idx + 1}. ${item.name}</span><span class="lb-ves">${item.ves} VES</span></div>
                         `).join('');
-                    } else { document.getElementById('lbList').innerHTML = '<div style="text-align:center; color:#64748b;">Sin jugadores</div>'; }
+                    } else { 
+                        document.getElementById('lbList').innerHTML = '<div style="text-align:center; color:#64748b;">Sin jugadores</div>'; 
+                    }
 
                     if (myId && !players[myId]) {
-                        ws.close(); alert('¡Has sido devorado por otro jugador!');
-                        document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
+                        ws.close(); 
+                        alert('¡Has sido devorado por otro jugador!');
+                        document.getElementById('loginOverlay').style.display = 'flex'; 
+                        myId = null;
                         updateBalanceDisplay();
                     }
                 } else if (data.type === 'withdraw_response') {
-                    if (data.success) { userVes = data.newVes; updateBalanceDisplay(); closeModal('withdrawModal'); alert('✅ ' + data.msg); } 
-                    else { alert('❌ ' + data.msg); }
+                    if (data.success) { 
+                        userVes = data.newVes; 
+                        updateBalanceDisplay(); 
+                        closeModal('withdrawModal'); 
+                        alert('✅ ' + data.msg); 
+                    } else { 
+                        alert('❌ ' + data.msg); 
+                    }
                 } else if (data.type === 'killed_by_virus') {
-                    ws.close(); alert('💥 ¡CHOCASTE CON UN VIRUS MORTAL Y EXPLOTASTE!');
-                    document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
+                    ws.close(); 
+                    alert('💥 ¡CHOCASTE CON UN VIRUS MORTAL Y EXPLOTASTE!');
+                    document.getElementById('loginOverlay').style.display = 'flex'; 
+                    myId = null;
                     updateBalanceDisplay();
                 } else if (data.type === 'killed_by_border') { 
-                    ws.close(); alert('🛑 ¡TOCASTE EL BORDE ROJO SIN TENER LOS 9,000 VES Y EXPLOTASTE!');
-                    document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
+                    ws.close(); 
+                    alert('🛑 ¡TOCASTE EL BORDE ROJO SIN TENER LOS 9,000 VES Y EXPLOTASTE!');
+                    document.getElementById('loginOverlay').style.display = 'flex'; 
+                    myId = null;
                     updateBalanceDisplay();
                 } else if (data.type === 'escaped') {
-                    userVes += data.vesGained; updateBalanceDisplay(); ws.close();
+                    userVes += data.vesGained; 
+                    updateBalanceDisplay(); 
+                    ws.close();
                     alert(`🎉 ¡ESCAPASTE CON ÉXITO! Te has retirado con ${data.vesGained} VES.`);
-                    document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
+                    document.getElementById('loginOverlay').style.display = 'flex'; 
+                    myId = null;
                     updateBalanceDisplay();
                 }
             };
+
             ws.onclose = () => { 
                 myId = null; 
                 updateBalanceDisplay();
