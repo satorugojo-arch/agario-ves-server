@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
         body, html { width: 100%; height: 100%; overflow: hidden; background-color: #03060d; font-family: sans-serif; }
-        #gameCanvas { display: block; width: 100vw; height: 100vh; background-color: #03060d; position: absolute; top: 0; left: 0; z-index: 1; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; background-color: #070c18; position: absolute; top: 0; left: 0; z-index: 1; }
         
         #topProgressContainer {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 480px;
@@ -28,7 +28,6 @@
         .lb-name { color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 105px; }
         .lb-ves { color: #00d2ff; font-weight: bold; }
         
-        /* CAPA DE LOGIN ASEGURADA CON Z-INDEX ALTO Y PUNTERO ACTIVO */
         #loginOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 6, 13, 0.95); display: flex; justify-content: center; align-items: center; z-index: 100; pointer-events: auto; }
         #loginBox { background: #0d1527; padding: 25px; border-radius: 16px; text-align: center; color: #fff; box-shadow: 0 0 35px rgba(0, 210, 255, 0.3); max-width: 90%; width: 380px; border: 1px solid #00d2ff44; position: relative; z-index: 101; }
         #loginBox h1 { color: #00d2ff; font-size: 24px; margin-bottom: 8px; text-shadow: 0 0 10px #00d2ff; }
@@ -48,7 +47,6 @@
         #btnRecharge { background: #00d2ff; color: #050811; flex: 1; }
         #btnWithdraw { background: #ff0055; color: #fff; flex: 1; }
         
-        /* MODALES CON Z-INDEX SUPERIOR */
         .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.88); justify-content: center; align-items: center; z-index: 200; pointer-events: auto; }
         .modal-content { background: #0d1527; padding: 20px; border-radius: 14px; width: 340px; max-width: 90%; color: #fff; text-align: left; border: 1px solid #00d2ff44; pointer-events: auto; }
         .input-field { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #1e293b; background: #070c18; color: #fff; outline: none; font-size: 13px; pointer-events: auto; }
@@ -132,10 +130,10 @@
         let players = {};
         let foods = [];
         let viruses = [];
-        let MAP_SIZE = 5000;
+        let MAP_SIZE = 2000; // MAPA REDUCIDO A 2000 PARA FLUIDEZ TOTAL
 
         let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-        let camera = { x: 2500, y: 2500 };
+        let camera = { x: 1000, y: 1000 };
         const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
         const canvas = document.getElementById('gameCanvas');
@@ -304,23 +302,21 @@
             };
         }
 
-        function drawVortexGrid() {
-            const gridSize = 100;
+        // CUADRÍCULA SIMPLE, SÓLIDA Y RÁPIDA (SIN EFECTOS PESADOS QUE CAUSEN FALLOS)
+        function drawGrid() {
+            const gridSize = 80;
             ctx.save();
-            ctx.strokeStyle = 'rgba(0, 210, 255, 0.25)';
-            ctx.lineWidth = 2;
-
-            const startX = Math.max(0, camera.x - canvas.width / 2 - gridSize);
-            const endX = Math.min(MAP_SIZE, camera.x + canvas.width / 2 + gridSize);
-            const startY = Math.max(0, camera.y - canvas.height / 2 - gridSize);
-            const endY = Math.min(MAP_SIZE, camera.y + canvas.height / 2 + gridSize);
+            ctx.strokeStyle = '#1e293b'; // Color de línea visible y elegante
+            ctx.lineWidth = 1;
 
             ctx.beginPath();
-            for (let x = startX - (startX % gridSize); x <= endX; x += gridSize) {
-                ctx.moveTo(x, startY); ctx.lineTo(x, endY);
+            for (let x = 0; x <= MAP_SIZE; x += gridSize) {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, MAP_SIZE);
             }
-            for (let y = startY - (startY % gridSize); y <= endY; y += gridSize) {
-                ctx.moveTo(startX, y); ctx.lineTo(endX, y);
+            for (let y = 0; y <= MAP_SIZE; y += gridSize) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(MAP_SIZE, y);
             }
             ctx.stroke();
             ctx.restore();
@@ -338,8 +334,8 @@
                 ctx.lineTo(rx, ry);
             }
             ctx.closePath();
-            ctx.fillStyle = '#00ff88'; ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 12; ctx.fill();
-            ctx.lineWidth = 3; ctx.strokeStyle = '#009944'; ctx.stroke();
+            ctx.fillStyle = '#00ff88'; ctx.fill();
+            ctx.lineWidth = 2; ctx.strokeStyle = '#009944'; ctx.stroke();
             ctx.restore();
         }
 
@@ -369,38 +365,37 @@
             ctx.save();
             ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
 
-            ctx.fillStyle = '#070c18';
+            // Fondo del mapa
+            ctx.fillStyle = '#0b1329';
             ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
 
-            drawVortexGrid();
+            // Dibujar la cuadrícula fija en todo el mapa pequeño
+            drawGrid();
 
-            ctx.lineWidth = 14;
+            // Bordes del mapa
+            ctx.lineWidth = 10;
             if (reachedGoal) {
-                ctx.strokeStyle = '#00ff88'; ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 25;
+                ctx.strokeStyle = '#00ff88';
             } else {
-                ctx.strokeStyle = '#ff0055'; ctx.shadowColor = '#ff0055'; ctx.shadowBlur = 20;
+                ctx.strokeStyle = '#ff0055';
             }
             ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
-            ctx.shadowBlur = 0;
 
-            events = foods.forEach(f => {
-                ctx.beginPath(); ctx.arc(f.x, f.y, f.radius || 4, 0, Math.PI * 2);
-                ctx.fillStyle = f.color || '#00d2ff'; ctx.fill();
-            });
-
-            // Arreglo directo de render de comida
+            // Comida
             foods.forEach(f => {
                 ctx.beginPath(); ctx.arc(f.x, f.y, f.radius || 4, 0, Math.PI * 2);
                 ctx.fillStyle = f.color || '#00d2ff'; ctx.fill();
             });
 
+            // Virus
             viruses.forEach(v => { drawVirus(v.x, v.y, v.radius); });
 
+            // Jugadores
             Object.values(players).forEach(p => {
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.color || '#00ff88'; ctx.shadowColor = p.color || '#00ff88'; ctx.shadowBlur = 12; ctx.fill();
-                ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke(); ctx.shadowBlur = 0;
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.fillText(p.name, p.x, p.y + 5);
+                ctx.fillStyle = p.color || '#00ff88'; ctx.fill();
+                ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Arial'; ctx.textAlign = 'center'; ctx.fillText(p.name, p.x, p.y + 4);
             });
 
             ctx.restore();
