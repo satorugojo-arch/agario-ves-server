@@ -26,7 +26,6 @@ function initFoods() {
 function initViruses() {
     viruses = [];
     for (let i = 0; i < 25; i++) {
-        // Los virus se generan lejos de los bordes para no estorbar
         viruses.push({
             x: Math.random() * (MAP_SIZE - 600) + 300,
             y: Math.random() * (MAP_SIZE - 600) + 300,
@@ -64,7 +63,6 @@ wss.on('connection', (ws) => {
                     id: playerId,
                     name: data.name || 'Jugador',
                     color: data.color || '#00ff88',
-                    // SPAWN ARREGLADO: Aparece estrictamente en el centro del mapa
                     x: (MAP_SIZE / 2) + (Math.random() * 100 - 50),
                     y: (MAP_SIZE / 2) + (Math.random() * 100 - 50),
                     radius: 25,
@@ -87,23 +85,19 @@ wss.on('connection', (ws) => {
                     
                     const currentVes = Math.floor(300 + (player.radius - 25) * 50);
 
-                    // LÓGICA DE BORDES MORTALES (REPARADA)
                     if (nextX <= player.radius || nextX >= MAP_SIZE - player.radius || 
                         nextY <= player.radius || nextY >= MAP_SIZE - player.radius) {
                         
                         if (currentVes >= 9000) {
-                            // SI TIENE EL DINERO, ESCAPA
                             ws.send(JSON.stringify({ type: 'escaped', vesGained: currentVes }));
                         } else {
-                            // SI NO TIENE EL DINERO, LO MATA EL BORDE ROJO
                             ws.send(JSON.stringify({ type: 'killed_by_border' }));
                         }
                         
-                        delete players[playerId]; // Elimina al jugador del servidor
-                        return; // Detiene la ejecución para que no se mueva más
+                        delete players[playerId];
+                        return;
                     }
 
-                    // Si no tocó el borde, actualiza su posición normalmente
                     player.x = nextX;
                     player.y = nextY;
                 }
