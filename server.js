@@ -3,12 +3,15 @@ const WebSocket = require('ws');
 const PORT = process.env.PORT || 3000;
 const wss = new WebSocket.Server({ port: PORT });
 
+// CONFIGURACIÓN DE TU BOT DE TELEGRAM
+const TELEGRAM_BOT_TOKEN = "PEGA_AQUI_TU_TELEGRAM_BOT_TOKEN";
+const TELEGRAM_CHAT_ID = "PEGA_AQUI_TU_TELEGRAM_CHAT_ID";
+
 let players = {};
 let foods = [];
 let viruses = [];
-const MAP_SIZE = 5000; // Mapa reducido a 5000px
+const MAP_SIZE = 5000;
 
-// Generar Comida
 function initFoods() {
     foods = [];
     for (let i = 0; i < 400; i++) {
@@ -20,7 +23,6 @@ function initFoods() {
     }
 }
 
-// Generar Virus Mortales
 function initViruses() {
     viruses = [];
     for (let i = 0; i < 25; i++) {
@@ -35,10 +37,29 @@ function initViruses() {
 initFoods();
 initViruses();
 
+// Función segura para enviar notificaciones a Telegram
+async function sendTelegramMessage(text) {
+    if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.includes("PEGA_AQUI")) return;
+    try {
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: text,
+                parse_mode: 'Markdown'
+            })
+        });
+    } catch (err) {
+        console.error('Error enviando a Telegram:', err);
+    }
+}
+
 wss.on('connection', (ws) => {
     const playerId = Math.random().toString(36).substr(2, 9);
     
-    ws.on('message', (message) => {
+    ws.on('message', async (message) => {
         try {
             const data = JSON.parse(message);
 
@@ -46,10 +67,10 @@ wss.on('connection', (ws) => {
                 players[playerId] = {
                     id: playerId,
                     name: data.name || 'Jugador',
-                    color: data.color || '#00e699',
+                    color: data.color || '#00ff88',
                     x: Math.random() * (MAP_SIZE - 600) + 300,
                     y: Math.random() * (MAP_SIZE - 600) + 300,
-                    radius: 25, // Equivalente a 300 VES
+                    radius: 25,
                     ws: ws
                 };
 
@@ -69,7 +90,6 @@ wss.on('connection', (ws) => {
                     
                     const currentVes = Math.floor(300 + (player.radius - 25) * 50);
 
-                    // Escapar al llegar a 9000 VES y tocar el borde
                     if (currentVes >= 9000) {
                         if (nextX <= 0 || nextX >= MAP_SIZE || nextY <= 0 || nextY >= MAP_SIZE) {
                             if (player.ws && player.ws.readyState === WebSocket.OPEN) {
@@ -84,6 +104,53 @@ wss.on('connection', (ws) => {
                     player.y = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextY));
                 }
             }
+
+            // PROCESAR RETIRO DE FORMA SEGURA DESDE EL SERVIDOR
+            if (data.type === 'request_withdraw') {
+                const player = players[playerId];
+                const requestedAmount = parseFloat(data.amount);
+
+                if (!player) {
+                    return ws.send(JSON.stringify({ type: 'withdraw_response', success: false, msg: 'Debes estar jugando para solicitar retiro.' }));
+                }
+
+                // Saldo real validado por el servidor
+                const realBalance = Math.floor(300 + (player.radius - 25) * 50);
+
+                if (isNaN(requestedAmount) || requestedAmount <= 0) {
+                    return ws.send(JSON.stringify({ type: 'withdraw_response', success: false, msg: 'Monto inválido.' }));
+                }
+
+                // VALIDACIÓN ANTI-TRAMPA: Si el monto pedido supera el saldo real registrado por el servidor
+                if (requestedAmount > realBalance) {
+                    return ws.send(JSON.stringify({ 
+                        type: 'withdraw_response', 
+                        success: false, 
+                        msg: `¡TRAMPA DETECTADA! Tu saldo real es de ${realBalance} VES.` 
+                    }));
+                }
+
+                // Reducir la masa/saldo equivalente tras el retiro
+                const vesRestantes = realBalance - requestedAmount;
+                player.radius = 25 + (vesRestantes - 300) / 50;
+
+                // Notificar directamente al Telegram del Administrador
+                const telegramMsg = `💸 *NUEVA SOLICITUD DE RETIRO*\n\n` +
+                    `👤 *Jugador:* ${player.name}\n` +
+                    `💰 *Monto Solicitado:* ${requestedAmount} VES\n` +
+                    `💳 *Método:* ${data.method}\n` +
+                    `📋 *Datos:* \`${data.details}\``;
+
+                await sendTelegramMessage(telegramMsg);
+
+                ws.send(JSON.stringify({ 
+                    type: 'withdraw_response', 
+                    success: true, 
+                    msg: `Solicitud enviada a Telegram con éxito.`,
+                    newVes: vesRestantes 
+                }));
+            }
+
         } catch (e) {
             console.error(e);
         }
@@ -95,7 +162,6 @@ wss.on('connection', (ws) => {
 });
 
 setInterval(() => {
-    // 1. Colisión con Comida
     Object.values(players).forEach(p => {
         foods.forEach((f, index) => {
             if (Math.hypot(p.x - f.x, p.y - f.y) < p.radius) {
@@ -108,11 +174,9 @@ setInterval(() => {
             }
         });
 
-        // 2. Colisión MORTAL con Virus
         viruses.forEach(v => {
             const dist = Math.hypot(p.x - v.x, p.y - v.y);
             if (dist < p.radius + v.radius - 10) {
-                // El jugador muere instantáneamente
                 if (p.ws && p.ws.readyState === WebSocket.OPEN) {
                     p.ws.send(JSON.stringify({ type: 'killed_by_virus' }));
                 }
@@ -121,7 +185,6 @@ setInterval(() => {
         });
     });
 
-    // 3. Colisión entre Jugadores (Transfiere 66.6% de la masa)
     const playerList = Object.values(players);
     for (let i = 0; i < playerList.length; i++) {
         for (let j = 0; j < playerList.length; j++) {
@@ -140,7 +203,6 @@ setInterval(() => {
         }
     }
 
-    // Preparar estado público de jugadores y Leaderboard
     const publicPlayers = {};
     const leaderboardArray = [];
 
@@ -157,7 +219,6 @@ setInterval(() => {
         leaderboardArray.push({ name: p.name, ves: vesVal });
     });
 
-    // Ordenar Leaderboard Top 5
     leaderboardArray.sort((a, b) => b.ves - a.ves);
     const top5 = leaderboardArray.slice(0, 5);
 
@@ -176,4 +237,4 @@ setInterval(() => {
     });
 }, 1000 / 30);
 
-console.log(`Servidor TRAGABOLIVARES activo con Virus Mortales y Leaderboard.`);
+console.log(`Servidor TRAGABOLIVARES activo con retiros directos a Telegram.`);
