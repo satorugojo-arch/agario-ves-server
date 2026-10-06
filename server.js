@@ -4,8 +4,8 @@ const PORT = process.env.PORT || 3000;
 const wss = new WebSocket.Server({ port: PORT });
 
 // CONFIGURACIÓN DE TU BOT DE TELEGRAM
-const TELEGRAM_BOT_TOKEN = "8934476656:AAFNjEHnYKDstq89rQjxAOwn6cUU2NvjwpM";
-const TELEGRAM_CHAT_ID = "1564515834";
+const TELEGRAM_BOT_TOKEN = "PEGA_AQUI_TU_TELEGRAM_BOT_TOKEN";
+const TELEGRAM_CHAT_ID = "PEGA_AQUI_TU_TELEGRAM_CHAT_ID";
 
 let players = {};
 let foods = [];
@@ -26,9 +26,10 @@ function initFoods() {
 function initViruses() {
     viruses = [];
     for (let i = 0; i < 25; i++) {
+        // Los virus se generan lejos de los bordes para no estorbar
         viruses.push({
-            x: Math.random() * (MAP_SIZE - 400) + 200,
-            y: Math.random() * (MAP_SIZE - 400) + 200,
+            x: Math.random() * (MAP_SIZE - 600) + 300,
+            y: Math.random() * (MAP_SIZE - 600) + 300,
             radius: 35
         });
     }
@@ -63,8 +64,9 @@ wss.on('connection', (ws) => {
                     id: playerId,
                     name: data.name || 'Jugador',
                     color: data.color || '#00ff88',
-                    x: Math.random() * (MAP_SIZE - 600) + 300,
-                    y: Math.random() * (MAP_SIZE - 600) + 300,
+                    // SPAWN ARREGLADO: Aparece estrictamente en el centro del mapa
+                    x: (MAP_SIZE / 2) + (Math.random() * 100 - 50),
+                    y: (MAP_SIZE / 2) + (Math.random() * 100 - 50),
                     radius: 25,
                     ws: ws
                 };
@@ -80,28 +82,28 @@ wss.on('connection', (ws) => {
 
                 if (dist > 5) {
                     const speed = Math.max(1.3, 7 - player.radius / 30);
-                    const nextX = player.x + (dx / dist) * speed;
-                    const nextY = player.y + (dy / dist) * speed;
+                    let nextX = player.x + (dx / dist) * speed;
+                    let nextY = player.y + (dy / dist) * speed;
                     
                     const currentVes = Math.floor(300 + (player.radius - 25) * 50);
 
-                    // LÓGICA DE BORDES: Si el jugador toca cualquier borde del mapa
-                    if (nextX <= player.radius || nextX >= MAP_SIZE - player.radius || nextY <= player.radius || nextY >= MAP_SIZE - player.radius) {
+                    // LÓGICA DE BORDES MORTALES (REPARADA)
+                    if (nextX <= player.radius || nextX >= MAP_SIZE - player.radius || 
+                        nextY <= player.radius || nextY >= MAP_SIZE - player.radius) {
+                        
                         if (currentVes >= 9000) {
-                            // Toca el borde y tiene >= 9000: ESCAPA
-                            if (player.ws && player.ws.readyState === WebSocket.OPEN) {
-                                player.ws.send(JSON.stringify({ type: 'escaped', vesGained: currentVes }));
-                            }
+                            // SI TIENE EL DINERO, ESCAPA
+                            ws.send(JSON.stringify({ type: 'escaped', vesGained: currentVes }));
                         } else {
-                            // Toca el borde y tiene < 9000: MUERE ELIMINADO POR EL BORDE ROJO
-                            if (player.ws && player.ws.readyState === WebSocket.OPEN) {
-                                player.ws.send(JSON.stringify({ type: 'killed_by_border' }));
-                            }
+                            // SI NO TIENE EL DINERO, LO MATA EL BORDE ROJO
+                            ws.send(JSON.stringify({ type: 'killed_by_border' }));
                         }
-                        delete players[playerId];
-                        return;
+                        
+                        delete players[playerId]; // Elimina al jugador del servidor
+                        return; // Detiene la ejecución para que no se mueva más
                     }
 
+                    // Si no tocó el borde, actualiza su posición normalmente
                     player.x = nextX;
                     player.y = nextY;
                 }
