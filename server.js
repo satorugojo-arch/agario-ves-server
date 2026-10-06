@@ -10,14 +10,14 @@ const TELEGRAM_CHAT_ID = "PEGA_AQUI_TU_TELEGRAM_CHAT_ID";
 let players = {};
 let foods = [];
 let viruses = [];
-const MAP_SIZE = 5000;
+const MAP_SIZE = 2000; // MAPA REDUCIDO A 2000
 
 function initFoods() {
     foods = [];
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 200; i++) {
         foods.push({
-            x: Math.random() * MAP_SIZE,
-            y: Math.random() * MAP_SIZE,
+            x: Math.random() * (MAP_SIZE - 100) + 50,
+            y: Math.random() * (MAP_SIZE - 100) + 50,
             color: `hsl(${Math.random() * 360}, 100%, 50%)`
         });
     }
@@ -25,10 +25,10 @@ function initFoods() {
 
 function initViruses() {
     viruses = [];
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 15; i++) {
         viruses.push({
-            x: Math.random() * (MAP_SIZE - 600) + 300,
-            y: Math.random() * (MAP_SIZE - 600) + 300,
+            x: Math.random() * (MAP_SIZE - 400) + 200,
+            y: Math.random() * (MAP_SIZE - 400) + 200,
             radius: 35
         });
     }
@@ -59,13 +59,15 @@ wss.on('connection', (ws) => {
             const data = JSON.parse(message);
 
             if (data.type === 'join') {
+                // SPAWN SEGURO EXACTAMENTE EN EL CENTRO DEL MAPA (SIN SALIRSE AFUERA)
+                const startRadius = 25;
                 players[playerId] = {
                     id: playerId,
                     name: data.name || 'Jugador',
                     color: data.color || '#00ff88',
-                    x: (MAP_SIZE / 2) + (Math.random() * 100 - 50),
-                    y: (MAP_SIZE / 2) + (Math.random() * 100 - 50),
-                    radius: 25,
+                    x: (MAP_SIZE / 2) + (Math.random() * 60 - 30),
+                    y: (MAP_SIZE / 2) + (Math.random() * 60 - 30),
+                    radius: startRadius,
                     ws: ws
                 };
 
@@ -85,8 +87,9 @@ wss.on('connection', (ws) => {
                     
                     const currentVes = Math.floor(300 + (player.radius - 25) * 50);
 
-                    if (nextX <= player.radius || nextX >= MAP_SIZE - player.radius || 
-                        nextY <= player.radius || nextY >= MAP_SIZE - player.radius) {
+                    // VALIDACIÓN ESTRICTA DE LOS 4 BORDES (IZQUIERDA, DERECHA, ARRIBA, ABAJO)
+                    if (nextX - player.radius <= 0 || nextX + player.radius >= MAP_SIZE || 
+                        nextY - player.radius <= 0 || nextY + player.radius >= MAP_SIZE) {
                         
                         if (currentVes >= 9000) {
                             ws.send(JSON.stringify({ type: 'escaped', vesGained: currentVes }));
@@ -136,7 +139,11 @@ setInterval(() => {
         foods.forEach((f, index) => {
             if (Math.hypot(p.x - f.x, p.y - f.y) < p.radius) {
                 p.radius += 0.2;
-                foods[index] = { x: Math.random() * MAP_SIZE, y: Math.random() * MAP_SIZE, color: `hsl(${Math.random() * 360}, 100%, 50%)` };
+                foods[index] = { 
+                    x: Math.random() * (MAP_SIZE - 100) + 50, 
+                    y: Math.random() * (MAP_SIZE - 100) + 50, 
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)` 
+                };
             }
         });
 
