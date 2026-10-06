@@ -14,12 +14,12 @@
         body, html {
             width: 100%; height: 100%;
             overflow: hidden;
-            background-color: #0b0e14;
+            background-color: #0d111a;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         #gameCanvas {
             display: block; width: 100vw; height: 100vh;
-            background-color: #0d111a;
+            background-color: #121826;
         }
         /* HUD Barra Superior */
         #topProgressContainer {
@@ -27,12 +27,12 @@
             top: 15px; left: 50%;
             transform: translateX(-50%);
             width: 80%; max-width: 480px;
-            background: rgba(15, 21, 34, 0.9);
+            background: rgba(15, 21, 34, 0.92);
             border: 2px solid #1a2233;
             border-radius: 12px;
             padding: 8px 15px;
             z-index: 5; text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
         }
         .progress-title {
             color: #fff; font-size: 12px; font-weight: bold;
@@ -53,33 +53,28 @@
             font-size: 11px; color: #ff3366; font-weight: bold; margin-top: 4px;
         }
 
-        /* Leaderboard Esquina Superior Derecha */
+        /* Leaderboard */
         #leaderboardBox {
             position: absolute;
             top: 15px; right: 15px;
-            width: 180px;
-            background: rgba(15, 21, 34, 0.88);
+            width: 190px;
+            background: rgba(15, 21, 34, 0.92);
             border: 1px solid #2a354d;
             border-radius: 10px;
-            padding: 10px;
-            color: #fff;
-            z-index: 5;
-            font-size: 12px;
+            padding: 10px; color: #fff;
+            z-index: 5; font-size: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         #leaderboardBox h4 {
-            color: #00e699;
-            text-align: center;
-            margin-bottom: 8px;
-            font-size: 13px;
-            border-bottom: 1px solid #2a354d;
-            padding-bottom: 4px;
+            color: #00e699; text-align: center; margin-bottom: 8px;
+            font-size: 13px; border-bottom: 1px solid #2a354d; padding-bottom: 4px;
+            letter-spacing: 0.5px;
         }
         .lb-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
+            display: flex; justify-content: space-between; margin-bottom: 4px;
+            font-size: 12px;
         }
-        .lb-name { color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px; }
+        .lb-name { color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 105px; }
         .lb-ves { color: #ffcc00; font-weight: bold; }
 
         /* Lobby */
@@ -101,8 +96,8 @@
         #loginBox h1 { color: #00e699; font-size: 24px; margin-bottom: 8px; }
         .banner-text {
             color: #ffcc00; font-size: 12px; font-weight: bold;
-            margin-bottom: 15px; line-height: 1.4;
-            background: rgba(255, 204, 0, 0.1); padding: 10px;
+            margin-bottom: 12px; line-height: 1.4;
+            background: rgba(255, 204, 0, 0.1); padding: 8px;
             border-radius: 8px; border: 1px dashed #ffcc0066;
         }
         .balance-card {
@@ -111,42 +106,34 @@
         }
         .balance-amount { font-size: 24px; font-weight: bold; color: #00e699; }
         #playerName {
-            width: 100%; padding: 12px; margin-bottom: 12px;
+            width: 100%; padding: 10px; margin-bottom: 10px;
             border-radius: 8px; border: 1px solid #2a354d;
-            background: #0f1522; color: #fff; font-size: 15px;
+            background: #0f1522; color: #fff; font-size: 14px;
             text-align: center; outline: none;
         }
 
-        /* Selector de Skin / Color */
         .skin-selector {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            display: flex; justify-content: center; gap: 10px; margin-bottom: 12px;
         }
         .color-opt {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid #2a354d;
-            transition: 0.2s;
+            width: 30px; height: 30px; border-radius: 50%;
+            cursor: pointer; border: 2px solid #2a354d; transition: 0.2s;
         }
-        .color-opt.selected {
-            border: 3px solid #fff;
-            transform: scale(1.15);
-        }
+        .color-opt.selected { border: 3px solid #fff; transform: scale(1.15); }
 
         .btn {
-            width: 100%; padding: 12px; border-radius: 8px;
-            border: none; font-weight: bold; font-size: 16px;
+            width: 100%; padding: 11px; border-radius: 8px;
+            border: none; font-weight: bold; font-size: 15px;
             cursor: pointer; margin-bottom: 8px;
         }
         #btnPlay { background: #00e699; color: #0b0e14; }
         #btnPlay:disabled { background: #2a354d; color: #6c7a9c; cursor: not-allowed; }
-        #btnRecharge { background: #3182ce; color: #fff; }
+        .btn-row { display: flex; gap: 8px; }
+        #btnRecharge { background: #3182ce; color: #fff; flex: 1; }
+        #btnWithdraw { background: #e53e3e; color: #fff; flex: 1; }
 
-        /* Modal Recarga */
-        #rechargeModal {
+        /* Modales */
+        .modal {
             display: none; position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85);
@@ -157,9 +144,10 @@
             width: 340px; max-width: 90%; color: #fff; text-align: left;
             border: 1px solid #3182ce;
         }
-        .payment-method {
-            background: #0f1522; padding: 10px; border-radius: 8px;
-            margin-bottom: 10px; border: 1px solid #2a354d; font-size: 13px;
+        .input-field {
+            width: 100%; padding: 10px; margin-bottom: 10px;
+            border-radius: 6px; border: 1px solid #2a354d;
+            background: #0f1522; color: #fff; outline: none; font-size: 13px;
         }
 
         /* Controls Mobile */
@@ -194,7 +182,7 @@
     <!-- Leaderboard -->
     <div id="leaderboardBox">
         <h4>🏆 TOP JUGADORES</h4>
-        <div id="lbList"><div style="text-align:center; color:#718096;">Esperando...</div></div>
+        <div id="lbList"><div style="text-align:center; color:#718096;">Sin jugadores</div></div>
     </div>
 
     <!-- Lobby -->
@@ -202,7 +190,7 @@
         <div id="loginBox">
             <h1>TRAGABOLÍVARES</h1>
             <div class="banner-text">
-                ⚠️ CUIDADO CON LOS VIRUS CON ESPINAS: TE MATARÁN INSTANTÁNEAMENTE.
+                LLEGA A 9,000 VES Y ESCAPA POR EL BORDE VERDE PARA RETIRAR TU DINERO REAL.
             </div>
 
             <div class="balance-card">
@@ -212,7 +200,7 @@
 
             <input type="text" id="playerName" placeholder="Tu Apodo..." maxlength="12">
             
-            <div style="font-size:12px; color:#a0aec0; margin-bottom:6px;">ELIGE TU COLOR DE ESFERA:</div>
+            <div style="font-size:11px; color:#a0aec0; margin-bottom:6px;">COLOR DE ESFERA:</div>
             <div class="skin-selector">
                 <div class="color-opt selected" style="background: #00e699;" onclick="selectColor('#00e699', this)"></div>
                 <div class="color-opt" style="background: #ff0055;" onclick="selectColor('#ff0055', this)"></div>
@@ -222,28 +210,54 @@
             </div>
 
             <button id="btnPlay" class="btn" onclick="tryPlay()">JUGAR (300 VES)</button>
-            <button id="btnRecharge" class="btn" onclick="openRecharge()">RECARGAR SALDO</button>
+            
+            <div class="btn-row">
+                <button id="btnRecharge" class="btn" onclick="openModal('rechargeModal')">RECARGAR</button>
+                <button id="btnWithdraw" class="btn" onclick="openModal('withdrawModal')">RETIRAR</button>
+            </div>
         </div>
     </div>
 
     <!-- Modal Recarga -->
-    <div id="rechargeModal">
+    <div id="rechargeModal" class="modal">
         <div class="modal-content">
             <h3 style="color:#3182ce; text-align:center; margin-bottom:8px;">RECARGAR SALDO</h3>
             <div style="background:rgba(229, 62, 62, 0.2); color:#feb2b2; padding:6px; border-radius:6px; font-size:12px; text-align:center; font-weight:bold; margin-bottom:10px;">
                 ⚠️ RECARGA MÍNIMA: 1,000 VES
             </div>
-            <div class="payment-method">
+            <div style="background:#0f1522; padding:10px; border-radius:8px; margin-bottom:10px; font-size:13px; border:1px solid #2a354d;">
                 <h4 style="color:#00e699;">PAGO MÓVIL</h4>
                 <p><strong>Banco:</strong> Banesco (0134)</p>
                 <p><strong>C.I.:</strong> 12.345.678</p>
                 <p><strong>Teléfono:</strong> 0412-1234567</p>
             </div>
-            <div class="payment-method">
+            <div style="background:#0f1522; padding:10px; border-radius:8px; margin-bottom:10px; font-size:13px; border:1px solid #2a354d;">
                 <h4 style="color:#00e699;">BINANCE PAY</h4>
                 <p><strong>Binance ID:</strong> 123456789</p>
             </div>
-            <button class="btn" style="background:#e53e3e; color:#fff;" onclick="closeRecharge()">VOLVER</button>
+            <button class="btn" style="background:#718096; color:#fff;" onclick="closeModal('rechargeModal')">VOLVER</button>
+        </div>
+    </div>
+
+    <!-- Modal Retiro -->
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content" style="border-color:#e53e3e;">
+            <h3 style="color:#e53e3e; text-align:center; margin-bottom:8px;">SOLICITAR RETIRO</h3>
+            <div style="font-size:11px; color:#a0aec0; margin-bottom:10px; text-align:center;">
+                Ingresa tus datos para procesar el pago de tus ganancias vía WhatsApp.
+            </div>
+
+            <input type="number" id="withdrawAmount" class="input-field" placeholder="Monto a retirar en VES...">
+            
+            <select id="withdrawMethod" class="input-field">
+                <option value="Pago Móvil">Pago Móvil</option>
+                <option value="Binance Pay">Binance Pay</option>
+            </select>
+
+            <textarea id="withdrawData" class="input-field" style="height:60px;" placeholder="Ej: Banesco, CI: 12345678, Tel: 04121234567"></textarea>
+
+            <button class="btn" style="background:#00e699; color:#111;" onclick="processWithdraw()">ENVIAR SOLICITUD</button>
+            <button class="btn" style="background:#718096; color:#fff;" onclick="closeModal('withdrawModal')">VOLVER</button>
         </div>
     </div>
 
@@ -251,6 +265,8 @@
     <div id="touchControls"><div id="joystickKnob"></div></div>
 
     <script>
+        const ADMIN_WHATSAPP = "584121234567"; 
+
         let userVes = 1000;
         const ENTRY_FEE = 300;
         const GOAL_VES = 9000;
@@ -291,8 +307,37 @@
         }
         updateBalanceDisplay();
 
-        function openRecharge() { document.getElementById('rechargeModal').style.display = 'flex'; }
-        function closeRecharge() { document.getElementById('rechargeModal').style.display = 'none'; }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function processWithdraw() {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const method = document.getElementById('withdrawMethod').value;
+            const details = document.getElementById('withdrawData').value;
+            const pName = document.getElementById('playerName').value || 'Jugador';
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('Ingresa un monto válido para retirar.');
+                return;
+            }
+            if (amount > userVes) {
+                alert('No tienes suficiente saldo disponible.');
+                return;
+            }
+            if (!details.trim()) {
+                alert('Ingresa los datos para realizar la transferencia.');
+                return;
+            }
+
+            userVes -= amount;
+            updateBalanceDisplay();
+
+            const msg = `Hola Admin! Quiero solicitar un retiro en TRAGABOLÍVARES.%0A%0A*Jugador:* ${pName}%0A*Monto:* ${amount} VES%0A*Método:* ${method}%0A*Datos:* ${details}`;
+            window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${msg}`, '_blank');
+
+            closeModal('withdrawModal');
+            alert(`Solicitud enviada. Te redireccionamos a WhatsApp para procesar tus ${amount} VES.`);
+        }
 
         function resize() {
             canvas.width = window.innerWidth;
@@ -373,15 +418,17 @@
                     foods = data.foods || [];
                     viruses = data.viruses || [];
 
-                    // Actualizar Leaderboard
-                    if (data.leaderboard) {
+                    // Renderizar Leaderboard correctamente
+                    if (data.leaderboard && data.leaderboard.length > 0) {
                         const lbHtml = data.leaderboard.map((item, idx) => `
                             <div class="lb-item">
                                 <span class="lb-name">${idx + 1}. ${item.name}</span>
                                 <span class="lb-ves">${item.ves} VES</span>
                             </div>
                         `).join('');
-                        document.getElementById('lbList').innerHTML = lbHtml || '<div style="text-align:center;">Sin jugadores</div>';
+                        document.getElementById('lbList').innerHTML = lbHtml;
+                    } else {
+                        document.getElementById('lbList').innerHTML = '<div style="text-align:center; color:#718096;">Sin jugadores</div>';
                     }
 
                     if (myId && !players[myId]) {
@@ -408,7 +455,6 @@
             ws.onclose = () => { myId = null; };
         }
 
-        // Función para dibujar Virus Espinoso
         function drawVirus(x, y, radius) {
             ctx.save();
             ctx.beginPath();
@@ -430,11 +476,42 @@
             }
 
             ctx.closePath();
-            ctx.fillStyle = '#33cc33';
+            ctx.fillStyle = '#00ff66';
             ctx.fill();
             ctx.lineWidth = 4;
-            ctx.strokeStyle = '#248f24';
+            ctx.strokeStyle = '#009933';
             ctx.stroke();
+            ctx.restore();
+        }
+
+        // Función para Dibujar Cuadrícula
+        function drawGrid(gridSize) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+
+            const startX = Math.floor((camera.x - canvas.width / 2) / gridSize) * gridSize;
+            const endX = startX + canvas.width + gridSize * 2;
+            const startY = Math.floor((camera.y - canvas.height / 2) / gridSize) * gridSize;
+            const endY = startY + canvas.height + gridSize * 2;
+
+            for (let x = startX; x <= endX; x += gridSize) {
+                if (x >= 0 && x <= MAP_SIZE) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, MAP_SIZE);
+                    ctx.stroke();
+                }
+            }
+
+            for (let y = startY; y <= endY; y += gridSize) {
+                if (y >= 0 && y <= MAP_SIZE) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(MAP_SIZE, y);
+                    ctx.stroke();
+                }
+            }
             ctx.restore();
         }
 
@@ -468,7 +545,10 @@
             ctx.save();
             ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
 
-            // 1. Bordes del mapa
+            // 1. Fondo de Cuadrícula
+            drawGrid(60);
+
+            // 2. Bordes del mapa
             ctx.lineWidth = 15;
             if (reachedGoal) {
                 ctx.strokeStyle = '#00e699';
@@ -481,7 +561,7 @@
             ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
             ctx.shadowBlur = 0;
 
-            // 2. Comida
+            // 3. Comida
             foods.forEach(f => {
                 ctx.beginPath();
                 ctx.arc(f.x, f.y, f.radius || 4, 0, Math.PI * 2);
@@ -489,12 +569,12 @@
                 ctx.fill();
             });
 
-            // 3. Virus Mortales
+            // 4. Virus Mortales
             viruses.forEach(v => {
                 drawVirus(v.x, v.y, v.radius);
             });
 
-            // 4. Jugadores
+            // 5. Jugadores
             Object.values(players).forEach(p => {
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
