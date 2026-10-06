@@ -6,7 +6,7 @@
     <title>TRAGABOLÍVARES VES</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #03060d; font-family: sans-serif; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #070c18; font-family: sans-serif; }
         #gameCanvas { display: block; width: 100vw; height: 100vh; background-color: #070c18; position: absolute; top: 0; left: 0; z-index: 1; }
         
         #topProgressContainer {
@@ -133,7 +133,7 @@
         let MAP_SIZE = 2000;
 
         let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-        let camera = { x: 1000, y: 1000 };
+        let camera = { x: 1000, y: 1000 }; // Centrado por defecto en el mapa de 2000x2000
         const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
         const canvas = document.getElementById('gameCanvas');
@@ -342,8 +342,10 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             let currentVes = 300; let reachedGoal = false;
 
+            // Si el usuario está jugando, la cámara sigue su celda. Si no, se queda centrada en el mapa.
             if (myId && players[myId]) {
-                camera.x = players[myId].x; camera.y = players[myId].y;
+                camera.x = players[myId].x; 
+                camera.y = players[myId].y;
                 currentVes = Math.floor(300 + (players[myId].radius - 25) * 50);
                 if (currentVes >= GOAL_VES) reachedGoal = true;
 
@@ -359,16 +361,23 @@
                     statusTxt.innerText = '🔒 BORDES BLOQUEADOS (SI TOCAS EL BORDE ROJO, MUERES)';
                     statusTxt.style.color = '#ff3366';
                 }
+            } else {
+                // Centrado estático en el medio del mapa cuando estás en el menú principal
+                camera.x = MAP_SIZE / 2;
+                camera.y = MAP_SIZE / 2;
             }
 
             ctx.save();
             ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
 
+            // Fondo del mapa visible siempre
             ctx.fillStyle = '#0b1329';
             ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
 
+            // Dibujar la cuadrícula fija
             drawGrid();
 
+            // Bordes del mapa (Rojo por defecto, verde si alcanza meta)
             ctx.lineWidth = 10;
             if (reachedGoal) {
                 ctx.strokeStyle = '#00ff88';
@@ -377,13 +386,16 @@
             }
             ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
 
+            // Comida
             foods.forEach(f => {
                 ctx.beginPath(); ctx.arc(f.x, f.y, f.radius || 4, 0, Math.PI * 2);
                 ctx.fillStyle = f.color || '#00d2ff'; ctx.fill();
             });
 
+            // Virus
             viruses.forEach(v => { drawVirus(v.x, v.y, v.radius); });
 
+            // Jugadores
             Object.values(players).forEach(p => {
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                 ctx.fillStyle = p.color || '#00ff88'; ctx.fill();
