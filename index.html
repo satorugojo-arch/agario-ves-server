@@ -240,7 +240,7 @@
                 } else if (data.type === 'killed_by_virus') {
                     ws.close(); alert('💥 ¡CHOCASTE CON UN VIRUS MORTAL Y EXPLOTASTE!');
                     document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
-                } else if (data.type === 'killed_by_border') { // NUEVO EVENTO DE MUERTE POR BORDE
+                } else if (data.type === 'killed_by_border') { 
                     ws.close(); alert('🛑 ¡TOCASTE EL BORDE ROJO SIN TENER LOS 9,000 VES Y EXPLOTASTE!');
                     document.getElementById('loginOverlay').style.display = 'flex'; myId = null;
                 } else if (data.type === 'escaped') {
@@ -252,15 +252,14 @@
             ws.onclose = () => { myId = null; };
         }
 
-        // LÍNEAS VÓRTEX ARREGLADAS Y EXTREMADAMENTE VISIBLES
         function drawVortexGrid() {
             const gridSize = 100;
             ctx.save();
-            ctx.strokeStyle = '#00d2ff'; // Color azul cian puro
-            ctx.lineWidth = 3; // Línea gruesa
-            ctx.globalAlpha = 0.4; // Altamente visible
+            ctx.strokeStyle = '#00d2ff'; 
+            ctx.lineWidth = 3; 
+            ctx.globalAlpha = 0.4; 
             ctx.shadowColor = '#00d2ff';
-            ctx.shadowBlur = 5; // Brillo ligero
+            ctx.shadowBlur = 5;
 
             ctx.beginPath();
             for (let x = 0; x <= MAP_SIZE; x += gridSize) {
@@ -316,10 +315,9 @@
             ctx.save();
             ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
 
-            // 1. Cuadrícula de Vórtex brillante
             drawVortexGrid();
 
-            // 2. Bordes del mapa
+            // Bordes del mapa visuales
             ctx.lineWidth = 14;
             if (reachedGoal) {
                 ctx.strokeStyle = '#00ff88'; ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 25;
