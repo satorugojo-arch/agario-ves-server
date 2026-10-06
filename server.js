@@ -3,18 +3,17 @@ const WebSocket = require('ws');
 const PORT = process.env.PORT || 3000;
 const wss = new WebSocket.Server({ port: PORT });
 
-// CONFIGURACIÓN DE TU BOT DE TELEGRAM
 const TELEGRAM_BOT_TOKEN = "PEGA_AQUI_TU_TELEGRAM_BOT_TOKEN";
 const TELEGRAM_CHAT_ID = "PEGA_AQUI_TU_TELEGRAM_CHAT_ID";
 
 let players = {};
 let foods = [];
 let viruses = [];
-const MAP_SIZE = 2000; // MAPA REDUCIDO A 2000
+const MAP_SIZE = 1500; // MAPA REDUCIDO A 1500X1500
 
 function initFoods() {
     foods = [];
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 150; i++) {
         foods.push({
             x: Math.random() * (MAP_SIZE - 100) + 50,
             y: Math.random() * (MAP_SIZE - 100) + 50,
@@ -25,7 +24,7 @@ function initFoods() {
 
 function initViruses() {
     viruses = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 10; i++) {
         viruses.push({
             x: Math.random() * (MAP_SIZE - 400) + 200,
             y: Math.random() * (MAP_SIZE - 400) + 200,
@@ -59,14 +58,13 @@ wss.on('connection', (ws) => {
             const data = JSON.parse(message);
 
             if (data.type === 'join') {
-                // SPAWN SEGURO EXACTAMENTE EN EL CENTRO DEL MAPA (SIN SALIRSE AFUERA)
                 const startRadius = 25;
                 players[playerId] = {
                     id: playerId,
                     name: data.name || 'Jugador',
                     color: data.color || '#00ff88',
-                    x: (MAP_SIZE / 2) + (Math.random() * 60 - 30),
-                    y: (MAP_SIZE / 2) + (Math.random() * 60 - 30),
+                    x: MAP_SIZE / 2 + (Math.random() * 40 - 20),
+                    y: MAP_SIZE / 2 + (Math.random() * 40 - 20),
                     radius: startRadius,
                     ws: ws
                 };
@@ -87,7 +85,6 @@ wss.on('connection', (ws) => {
                     
                     const currentVes = Math.floor(300 + (player.radius - 25) * 50);
 
-                    // VALIDACIÓN ESTRICTA DE LOS 4 BORDES (IZQUIERDA, DERECHA, ARRIBA, ABAJO)
                     if (nextX - player.radius <= 0 || nextX + player.radius >= MAP_SIZE || 
                         nextY - player.radius <= 0 || nextY + player.radius >= MAP_SIZE) {
                         
@@ -136,6 +133,9 @@ wss.on('connection', (ws) => {
 
 setInterval(() => {
     Object.values(players).forEach(p => {
+        p.x = Math.max(p.radius, Math.min(MAP_SIZE - p.radius, p.x));
+        p.y = Math.max(p.radius, Math.min(MAP_SIZE - p.radius, p.y));
+
         foods.forEach((f, index) => {
             if (Math.hypot(p.x - f.x, p.y - f.y) < p.radius) {
                 p.radius += 0.2;
