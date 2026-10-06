@@ -9,7 +9,7 @@ const TELEGRAM_CHAT_ID = "PEGA_AQUI_TU_TELEGRAM_CHAT_ID";
 let players = {};
 let foods = [];
 let viruses = [];
-const MAP_SIZE = 1500; // MAPA REDUCIDO A 1500X1500
+const MAP_SIZE = 1500; // CUADRO EXACTO 1500x1500
 
 function initFoods() {
     foods = [];
@@ -59,12 +59,13 @@ wss.on('connection', (ws) => {
 
             if (data.type === 'join') {
                 const startRadius = 25;
+                // SPAWN SEGURO Y CENTRADO DENTRO DEL CUADRO
                 players[playerId] = {
                     id: playerId,
                     name: data.name || 'Jugador',
                     color: data.color || '#00ff88',
-                    x: MAP_SIZE / 2 + (Math.random() * 40 - 20),
-                    y: MAP_SIZE / 2 + (Math.random() * 40 - 20),
+                    x: MAP_SIZE / 2,
+                    y: MAP_SIZE / 2,
                     radius: startRadius,
                     ws: ws
                 };
@@ -85,6 +86,7 @@ wss.on('connection', (ws) => {
                     
                     const currentVes = Math.floor(300 + (player.radius - 25) * 50);
 
+                    // REVISIÓN ESTRICTA DE LOS 4 BORDES DEL CUADRO
                     if (nextX - player.radius <= 0 || nextX + player.radius >= MAP_SIZE || 
                         nextY - player.radius <= 0 || nextY + player.radius >= MAP_SIZE) {
                         
@@ -133,6 +135,7 @@ wss.on('connection', (ws) => {
 
 setInterval(() => {
     Object.values(players).forEach(p => {
+        // BLOQUEO ABSOLUTO PARA IMPEDIR CUALQUIER SALIDA FUERA DEL CUADRO
         p.x = Math.max(p.radius, Math.min(MAP_SIZE - p.radius, p.x));
         p.y = Math.max(p.radius, Math.min(MAP_SIZE - p.radius, p.y));
 
